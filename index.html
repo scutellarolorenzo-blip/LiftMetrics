@@ -9,7 +9,6 @@
     <!-- Supabase JS Client CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- Chart.js CDN per Grafici Moderni e Interattivi -->
-    <!-- Chart.js CDN per Grafici Moderni e Interattivi -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- html2canvas per catturare gli screenshot -->
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
@@ -109,8 +108,8 @@ body::after {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     position: relative;
-    padding-right: 6px; /* <--- Aggiungi questo per non tagliare la 's' finale */
-    overflow: visible;  /* <--- Assicura che nulla venga nascosto */
+    padding-right: 6px;
+    overflow: visible;
 }
 .header::after {
     content: "TRAIN • TRACK • EVOLVE";
@@ -215,9 +214,10 @@ body::after {
     border-radius: 19px!important;
     background: linear-gradient(145deg,rgba(18,22,32,.95),rgba(10,13,20,.96))!important;
     padding: 15px; margin-bottom: 13px;
+    overflow: visible !important;
 }
 .block-card.is-superset-group { border: 1px solid rgba(155,114,255,.42)!important; background: linear-gradient(145deg,rgba(126,81,218,.10),rgba(16,14,25,.78))!important; }
-.edit-block-item { border-radius: 18px!important; padding: 16px!important; margin-bottom: 10px!important; background: linear-gradient(145deg,rgba(20,24,35,.95),rgba(10,13,20,.97))!important; }
+.edit-block-item { border-radius: 18px!important; padding: 16px!important; margin-bottom: 10px!important; background: linear-gradient(145deg,rgba(20,24,35,.95),rgba(10,13,20,.97))!important; overflow: visible !important; }
 .edit-block-item.superset-item { border-left: 3px solid var(--superset-border)!important; }
 .set-group-card { background: rgba(255,255,255,.018)!important; border-radius: 16px!important; padding: 11px; margin-bottom: 9px; }
 
@@ -249,7 +249,7 @@ body::after {
 
 .timer-sticky {
     position: sticky; 
-    top: 65px; /* Si posiziona appena sotto la barra dei tab in alto */
+    top: 65px;
     z-index: 40;
     box-shadow: 0 18px 45px rgba(0,0,0,.52); 
     backdrop-filter: blur(24px);
@@ -320,7 +320,6 @@ input:focus, select:focus {
     box-shadow: 0 0 0 3px rgba(109,140,255,.18), 0 0 20px rgba(109,140,255,.15) !important; 
 }
 
-/* Modifiche per nomi estesi a capo */
 .sub-exercise-row input[type="text"] {
     white-space: normal !important;
     word-break: break-word !important;
@@ -355,31 +354,30 @@ input:focus, select:focus {
 }
 
 .custom-select-trigger {
-    display: inline-flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
     background: linear-gradient(135deg, rgba(109, 140, 255, 0.18), rgba(154, 124, 255, 0.12)) !important;
     border: 1px solid rgba(109, 140, 255, 0.35) !important;
     color: var(--if-blue) !important;
-    font-size: 12px !important;
+    font-size: 11px !important;
     font-weight: 800 !important;
-    padding: 8px 14px !important;
-    border-radius: 14px !important;
+    padding: 8px 10px !important;
+    border-radius: 12px !important;
     cursor: pointer;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
-    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
-    white-space: normal !important; /* Modificato da nowrap a normal */
-    height: auto !important;
+    width: 100% !important;
     min-height: 40px;
-    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .custom-select-trigger span:first-child {
-    overflow: visible !important;
-    text-overflow: clip !important;
-    white-space: normal !important; /* Permette al testo del menu di andare a capo */
-    word-break: break-word !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    flex: 1;
+    text-align: left;
 }
 
 .custom-select-trigger:hover {
@@ -404,24 +402,25 @@ input:focus, select:focus {
 }
 
 .custom-select-options {
+    display: none; /* Aggiunto per tenerli chiusi di default */
     position: absolute;
-    top: calc(100% + 6px);
+    top: calc(100% + 4px);
+    left: 0;
     right: 0;
-    min-width: 170px;
-    max-height: 240px;
+    min-width: 100%;
+    max-height: 220px;
     overflow-y: auto;
-    background: linear-gradient(145deg, rgba(20, 24, 37, 0.98), rgba(10, 13, 20, 0.99)) !important;
+    background: linear-gradient(145deg, rgba(20, 24, 37, 0.99), rgba(10, 13, 20, 0.99)) !important;
     border: 1px solid var(--if-line-strong) !important;
-    border-radius: 18px !important;
+    border-radius: 14px !important;
     padding: 6px !important;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-8px) scale(0.96);
-    transition: opacity 0.22s ease, transform 0.22s ease, visibility 0.22s ease;
-    z-index: 200;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75) !important;
+    z-index: 9999 !important;
+}
+
+/* Forza la visualizzazione solo quando il contenitore ha la classe .open */
+.custom-select-wrapper.open .custom-select-options {
+    display: block !important;
 }
 
 .custom-select-options::-webkit-scrollbar { width: 6px; }
@@ -445,7 +444,7 @@ input:focus, select:focus {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    white-space: normal !important; /* Forza l'andata a capo */
+    white-space: normal !important;
     word-break: break-word !important;
 }
 
@@ -540,6 +539,7 @@ input:focus, select:focus {
     border: 1px solid rgba(154,124,255,.22)!important;
     border-radius: 19px!important; padding: 16px; margin-bottom: 14px;
     box-shadow: 0 16px 42px rgba(0,0,0,.22)!important;
+    overflow: visible !important;
 }
 .history-item {
     position: relative; overflow: hidden; border-radius: 18px!important; padding: 17px!important; margin-bottom: 10px!important;
@@ -659,7 +659,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
 
                 <input type="email" id="auth-email" placeholder="La tua email">
                 
-                <!-- Campo Password con toggle visibilità -->
                 <div style="position: relative; width: 100%; margin-bottom: 8px;">
                     <input type="password" id="auth-password" placeholder="La tua password" style="margin-bottom: 0 !important; padding-right: 40px !important;">
                    <button type="button" onclick="togglePasswordVisibility('auth-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--subtext); cursor: pointer; display: flex; align-items: center; padding: 4px; z-index: 5;">
@@ -679,7 +678,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                 <h2 style="font-size: 22px; font-weight: 800; margin-bottom: 6px; color: var(--success);">Nuova Password</h2>
                 <p style="color: var(--subtext); font-size: 13px; margin-bottom: 22px;">Inserisci e conferma la tua nuova password sicura.</p>
 
-                <!-- Nuova Password con toggle SVG -->
                 <div style="position: relative; width: 100%; margin-bottom: 8px;">
                     <input type="password" id="new-password" placeholder="Nuova password" style="margin-bottom: 0 !important; padding-right: 40px !important;">
                     <button type="button" onclick="togglePasswordVisibility('new-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--subtext); cursor: pointer; display: flex; align-items: center; padding: 4px; z-index: 5;">
@@ -687,7 +685,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                     </button>
                 </div>
 
-                <!-- Conferma Nuova Password con toggle SVG -->
                 <div style="position: relative; width: 100%; margin-bottom: 8px;">
                     <input type="password" id="confirm-new-password" placeholder="Conferma nuova password" style="margin-bottom: 0 !important; padding-right: 40px !important;">
                     <button type="button" onclick="togglePasswordVisibility('confirm-new-password', this)" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--subtext); cursor: pointer; display: flex; align-items: center; padding: 4px; z-index: 5;">
@@ -704,7 +701,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
     <div id="main-app-container" class="hidden">
         <div class="nav-tabs" id="main-nav-tabs">
             <button class="tab-btn active" onclick="switchTab(0, this)">
-                <!-- Icona Allenamento rinnovata: Bilanciere / Pesi stilizzati coerenti -->
                 <svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 10v4"/><path d="M17.5 10v4"/><path d="M2 12h20"/><path d="M2 9h3v6H2z"/><path d="M19 9h3v6h-3z"/></svg>
                 <span class="tab-label">Allenamento</span>
             </button>
@@ -739,7 +735,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                             </div>
                             <div class="select-btn-wrapper">
                                 <div class="custom-select-wrapper" id="custom-dashboard-select">
-                                    <div class="custom-select-trigger" onclick="toggleCustomDropdown('custom-dashboard-select')">
+                                    <div class="custom-select-trigger" onclick="toggleCustomDropdown('custom-dashboard-select', event)">
                                         <span>Seleziona Scheda</span>
                                        <span class="custom-select-arrow">
                                             <svg style="width:10px; height:10px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -766,7 +762,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
             </div>
 
             <div id="active-workout-view" class="hidden">
-                <!-- Contenitore unico con posizione sticky per bloccare HUD e Timer in alto -->
                 <div style="position: sticky; top: 0; z-index: 100; background: var(--bg); padding-top: 4px; padding-bottom: 8px;">
                    <div class="workout-hud">
                         <div>
@@ -775,7 +770,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                             <div class="workout-hud-meta" id="workout-hud-meta">Preparazione sessione…</div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <!-- Cronometro della sessione -->
                             <div style="text-align: right;">
                                 <div style="font-size: 8px; font-weight: 900; color: #79849a; text-transform: uppercase; letter-spacing: 1px;">Tempo</div>
                                 <div id="workout-elapsed-time" style="font-size: 13px; font-weight: 800; color: var(--if-blue); font-variant-numeric: tabular-nums;">00:00</div>
@@ -792,7 +786,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                     </div>
                 </div>
 
-                <!-- Lista degli esercizi che scorrerà sotto -->
                 <div id="workout-list" style="margin-top: 14px;"></div>
             </div>
 
@@ -854,6 +847,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         </div>
 
         <!-- 2. TAB SCHEDA -->
+       <!-- 2. TAB SCHEDA -->
         <div id="tab-edit" class="tab-content">
             <div id="summary-mode-view">
                 <div class="card" style="margin-bottom: 12px; background: #11131a; text-align:center;">
@@ -869,7 +863,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                         </h3>
                         <div class="select-btn-wrapper">
                             <div class="custom-select-wrapper" id="custom-summary-select">
-                                <div class="custom-select-trigger" onclick="toggleCustomDropdown('custom-summary-select')">
+                                <div class="custom-select-trigger" onclick="toggleCustomDropdown('custom-summary-select', event)">
                                     <span>Seleziona Scheda</span>
                                     <span class="custom-select-arrow">▼</span>
                                 </div>
@@ -892,7 +886,18 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
             </div>
 
             <div id="edit-mode-view" class="hidden">
-                <!-- Rinomina Scheda -->
+                <!-- MENU A TENDINA IN CIMA PER SELEZIONARE LA SCHEDA -->
+                <div class="card" style="margin-bottom: 14px;">
+                    <span class="field-label">Seleziona Scheda da Modificare</span>
+                    <div class="custom-select-wrapper" id="custom-edit-select">
+                        <div class="custom-select-trigger" onclick="toggleCustomDropdown('custom-edit-select', event)">
+                            <span>Seleziona Scheda</span>
+                            <span class="custom-select-arrow">▼</span>
+                        </div>
+                        <div class="custom-select-options"></div>
+                    </div>
+                </div>
+
                 <div class="card" style="margin-bottom: 14px;">
                     <span class="field-label">Rinomina Scheda Corrente</span>
                     <div style="display:flex; gap:8px; align-items:center;">
@@ -901,12 +906,10 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                     </div>
                 </div>
 
-                <!-- Scelta Tipologia Inserimento -->
-               <!-- Scelta Tipologia Inserimento -->
                 <div class="card" style="margin-bottom: 14px;">
                     <span class="field-label">Tipo di Inserimento</span>
                     <div class="custom-select-wrapper" id="custom-insertion-type-select">
-                        <div class="custom-select-trigger" onclick="toggleCustomDropdown('custom-insertion-type-select')">
+                        <div class="custom-select-trigger" onclick="toggleCustomDropdown('custom-insertion-type-select', event)">
                             <span>Seleziona Tipo di Esercizio</span>
                             <span class="custom-select-arrow">▼</span>
                         </div>
@@ -914,9 +917,8 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                     </div>
                 </div>
 
-                <!-- BOX 1: ESERCIZIO SINGOLO (Inizialmente nascosto) -->
+                <!-- BOX 1: ESERCIZIO SINGOLO -->
                 <div class="card hidden" id="insertion-single-box">
-                    <!-- (tutto il contenuto interno del box esercizio singolo rimane uguale a prima) -->
                     <h3 style="font-size:16px; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
                         <svg style="width:16px; height:16px; color:var(--if-blue);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                         Aggiungi Esercizio Singolo
@@ -927,11 +929,10 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                         <input type="text" id="single-name" placeholder="Es. Panca Piana" style="margin-bottom:0 !important;">
                     </div>
 
-                    <!-- Scelta Modalità Ripetizioni -->
                     <div style="margin-bottom:8px;">
                         <span class="field-label">Modalità Ripetizioni</span>
                         <div class="custom-select-wrapper" id="custom-rep-mode-select">
-                            <div class="custom-select-trigger" onclick="toggleCustomDropdown('custom-rep-mode-select')">
+                            <div class="custom-select-trigger" onclick="toggleCustomDropdown('custom-rep-mode-select', event)">
                                 <span>Uguali per tutte le serie</span>
                                 <span class="custom-select-arrow">▼</span>
                             </div>
@@ -939,7 +940,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                         </div>
                     </div>
 
-                    <!-- Contenitore per le ripetizioni standard (uguali) -->
                     <div id="standard-reps-container" class="form-group-2" style="margin-bottom:8px;">
                         <div>
                             <span class="field-label">N° Serie</span>
@@ -951,17 +951,15 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                         </div>
                     </div>
 
-                    <!-- Contenitore dinamico per le ripetizioni personalizzate per ogni serie -->
                     <div id="custom-reps-container" class="hidden" style="margin-bottom:8px;">
                         <span class="field-label">Ripetizioni per ciascuna serie</span>
                         <div id="custom-reps-inputs-list" style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;"></div>
                     </div>
 
-                    <!-- Scelta Modalità Peso -->
                     <div style="margin-bottom:8px;">
                         <span class="field-label">Modalità Peso</span>
                         <div class="custom-select-wrapper" id="custom-weight-mode-select">
-                            <div class="custom-select-trigger" onclick="toggleCustomDropdown('custom-weight-mode-select')">
+                            <div class="custom-select-trigger" onclick="toggleCustomDropdown('custom-weight-mode-select', event)">
                                 <span>Uguale per tutte le serie</span>
                                 <span class="custom-select-arrow">▼</span>
                             </div>
@@ -969,13 +967,11 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                         </div>
                     </div>
 
-                    <!-- Contenitore per il peso standard (uguale) -->
                     <div id="standard-weight-container" style="margin-bottom:8px;">
                         <span class="field-label">Peso iniziale (kg)</span>
                         <input type="number" id="single-weight" placeholder="0" value="0" style="margin-bottom:0 !important;" onchange="updateCustomWeightFields()">
                     </div>
 
-                    <!-- Contenitore dinamico per il peso personalizzato per ogni serie -->
                     <div id="custom-weight-container" class="hidden" style="margin-bottom:8px;">
                         <span class="field-label" style="color:var(--if-blue);">Peso per ciascuna serie:</span>
                         <div id="custom-weight-inputs-list" style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;"></div>
@@ -994,9 +990,8 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                     <button class="btn btn-primary" style="width:100%" onclick="addSingleExercise()">+ Aggiungi alla Scheda</button>
                 </div>
 
-                <!-- BOX 2: SUPERSET (inizialmente nascosto) -->
+                <!-- BOX 2: SUPERSET -->
                 <div class="superset-builder-box hidden" id="insertion-superset-box">
-                    <!-- (tutto il contenuto interno del box superset rimane uguale a prima) -->
                     <h3 style="font-size:16px; margin-bottom:12px; color:#c084fc; display:flex; align-items:center; gap:8px;">
                         <svg style="width:16px; height:16px; color:#c084fc;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                         Aggiungi Superset
@@ -1039,7 +1034,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                     <div style="flex: 1; min-width: 0;">
                         <label style="font-size:12px; color:var(--subtext); display:block; margin-bottom:4px;">ESERCIZIO</label>
                         <div class="custom-select-wrapper" id="custom-chart-ex-select">
-                            <div class="custom-select-trigger" onclick="toggleCustomDropdown('custom-chart-ex-select')">
+                            <div class="custom-select-trigger" onclick="toggleCustomDropdown('custom-chart-ex-select', event)">
                                 <span>Seleziona Esercizio</span>
                                 <span class="custom-select-arrow">▼</span>
                             </div>
@@ -1049,7 +1044,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                     <div style="flex: 1; min-width: 0;">
                         <label style="font-size:12px; color:var(--subtext); display:block; margin-bottom:4px;">METRICA</label>
                         <div class="custom-select-wrapper" id="custom-chart-type-select">
-                            <div class="custom-select-trigger" onclick="toggleCustomDropdown('custom-chart-type-select')">
+                            <div class="custom-select-trigger" onclick="toggleCustomDropdown('custom-chart-type-select', event)">
                                 <span>Volume & Intensità</span>
                                 <span class="custom-select-arrow">▼</span>
                             </div>
@@ -1153,13 +1148,13 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
     const swipeContainer = document.getElementById('swipe-container');
 
     swipeContainer.addEventListener('touchstart', e => {
-        if (workoutState.active) return; // Disabilita swipe se l'allenamento è attivo
+        if (workoutState.active) return;
         touchStartX = e.changedTouches[0].screenX;
         touchStartY = e.changedTouches[0].screenY;
     }, {passive: true});
 
     swipeContainer.addEventListener('touchend', e => {
-        if (workoutState.active) return; // Disabilita swipe se l'allenamento è attivo
+        if (workoutState.active) return;
         const touchEndX = e.changedTouches[0].screenX;
         const touchEndY = e.changedTouches[0].screenY;
         const diffX = touchEndX - touchStartX;
@@ -1186,8 +1181,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         const triggerSpan = wrapper.querySelector('.custom-select-trigger span');
 
         let currentLabel = defaultText;
-        
-        // Cerca l'etichetta corrispondente al valore corrente (currentVal)
         optionsList.forEach(opt => {
             const val = typeof opt === 'object' ? opt.value : opt;
             const label = typeof opt === 'object' ? opt.label : opt;
@@ -1264,8 +1257,9 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
             optionsContainer.appendChild(optionEl);
         });
     }
-    let selectedRepMode = 'equal'; // Memorizza la modalità scelta
-    let selectedWeightMode = 'equal'; // 'equal' o 'custom' per il peso
+
+    let selectedRepMode = 'equal';
+    let selectedWeightMode = 'equal';
 
     function initRepModeSelect() {
         const repModeOptions = [
@@ -1367,25 +1361,36 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         }
     }
 
-    // Aggiorna anche quando cambia il numero di serie nel campo standard
     document.getElementById('single-sets')?.addEventListener('input', updateCustomRepFields);
-    function toggleCustomDropdown(wrapperId) {
+
+    function toggleCustomDropdown(wrapperId, event) {
+        if (event) event.stopPropagation();
         const target = document.getElementById(wrapperId);
         if (!target) return;
         const isOpen = target.classList.contains('open');
         
-        document.querySelectorAll('.custom-select-wrapper').forEach(w => w.classList.remove('open'));
+        // Chiude tutti gli altri menu a tendina aperti nella pagina
+        document.querySelectorAll('.custom-select-wrapper').forEach(w => {
+            if (w.id !== wrapperId) {
+                w.classList.remove('open');
+            }
+        });
         
-        if (!isOpen) {
+        // Inverti lo stato del menu cliccato
+        if (isOpen) {
+            target.classList.remove('open');
+        } else {
             target.classList.add('open');
         }
     }
 
-    document.addEventListener('click', (e) => {
+    window.addEventListener('click', (e) => {
         if (!e.target.closest('.custom-select-wrapper')) {
-            document.querySelectorAll('.custom-select-wrapper').forEach(w => w.classList.remove('open'));
+            document.querySelectorAll('.custom-select-wrapper').forEach(w => {
+                w.classList.remove('open');
+            });
         }
-    });
+    }, true);
 
     function updateLiftMetricsDashboard() {
         const routineKey = currentRoutineKey;
@@ -1419,7 +1424,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         if (value) value.textContent = `${pct}%`;
         if (ring) ring.style.background = `conic-gradient(var(--if-blue) ${pct * 3.6}deg, rgba(255,255,255,.06) ${pct * 3.6}deg)`;
 
-        // Calcola e aggiorna il tempo trascorso dall'avvio della sessione
         if (timeEl && workoutState.startTime) {
             const now = new Date();
             const elapsedSeconds = Math.floor((now - new Date(workoutState.startTime)) / 1000);
@@ -1430,7 +1434,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
     }
 
     function switchTab(index) {
-        if (workoutState.active && index !== 0) return; // Impedisce il cambio tab se l'allenamento è attivo
+        if (workoutState.active && index !== 0) return;
         currentTabIndex = index;
         localStorage.setItem('LiftMetrics_current_tab', index);
         const buttons = document.querySelectorAll('.tab-btn');
@@ -1518,7 +1522,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         document.getElementById('main-app-container').classList.remove('hidden');
         document.getElementById('logout-btn').classList.remove('hidden');
         
-        // 1. Recupera prima le routine salvate localmente per evitare il reset alla prima scheda
         const savedRoutines = localStorage.getItem('LiftMetrics_routines');
         if (savedRoutines) {
             try { routines = JSON.parse(savedRoutines); } catch(e){}
@@ -1536,7 +1539,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         historyData = JSON.parse(localStorage.getItem('LiftMetrics_history') || '[]');
         savedStatusMap = JSON.parse(localStorage.getItem('LiftMetrics_saved_status') || '{}');
 
-        // 2. Controlla se c'è un allenamento attivo
         const hasActiveSession = loadActiveWorkoutSession();
 
         if (hasActiveSession) {
@@ -1552,7 +1554,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                 startWorkTimer(true);
             }
         } else {
-            // Ripristina l'ultimo tab in cui si trovava l'utente
             const savedTab = localStorage.getItem('LiftMetrics_current_tab');
             const targetTab = savedTab !== null ? parseInt(savedTab) : 0;
             
@@ -1563,7 +1564,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
             switchTab(targetTab);
         }
 
-        // 3. Sincronizza i dati dal cloud in background senza toccare la UI corrente
         fetchRemoteData().then(() => {
             if (!workoutState.active) {
                 if (routines[currentRoutineKey]) {
@@ -1668,12 +1668,8 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                 await customAlert("Errore di registrazione: " + error.message);
             } else {
                 await customAlert("Registrazione completata! Ora puoi accedere.");
-                
-                // Pulisce i campi email e password
                 emailInput.value = '';
                 passwordInput.value = '';
-
-                // Riporta l'app in modalità di accesso (Login)
                 isRegistering = false;
                 toggleAuthMode();
             }
@@ -1692,13 +1688,11 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         const confirmLogout = await customConfirm("Vuoi uscire dal tuo account?", "Disconnessione");
         if (!confirmLogout) return;
         try {
-            // Forza la sincronizzazione prima di uscire
             await syncDataToSupabase();
-            
             const { error } = await db.auth.signOut();
             if (error) console.warn("Logout Supabase non completato:", error.message);
         } catch (e) {
-            console.warn("Logout locale eseguito nonostante l'errore di rete:", e);
+            console.warn("Logout locale eseguito:", e);
         } finally {
             currentUser = null;
             localStorage.removeItem('LiftMetrics_active_session');
@@ -1727,10 +1721,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
     }
 
    async function syncDataToSupabase() {
-        if (!navigator.onLine || !currentUser) {
-            console.log("Sincronizzazione saltata: offline o utente non loggato.");
-            return false;
-        }
+        if (!navigator.onLine || !currentUser) return false;
         try {
             const payload = {
                 id: currentUser.id,
@@ -1739,16 +1730,12 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                 saved_status: savedStatusMap,
                 updated_at: new Date()
             };
-
             const { error } = await db.from('LiftMetrics_data').upsert(payload);
-            
             if (error) {
-                console.error("Errore di salvataggio su Supabase (Verifica le Policy RLS):", error.message);
+                console.error("Errore di salvataggio su Supabase:", error.message);
                 return false;
-            } else {
-                console.log("Dati salvati sul cloud con successo!");
-                return true;
             }
+            return true;
         } catch (e) {
             console.error("Eccezione durante la sincronizzazione:", e);
             return false;
@@ -1763,14 +1750,11 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                 .eq('id', currentUser.id)
                 .single();
                 
-            // Controlla se esistono dati nel cloud
             if (data && !error && data.routines && Object.keys(data.routines).length > 0) {
-                // Se sul cloud ci sono dati validi, uniscili o usali se quelli locali sono vuoti
                 routines = data.routines;
                 historyData = data.history || [];
                 savedStatusMap = data.saved_status || {};
             } else {
-                // Se il cloud è vuoto ma l'utente ha dati locali importanti, caricali subito sul cloud!
                 const localRoutines = localStorage.getItem('LiftMetrics_routines');
                 const localHistory = localStorage.getItem('LiftMetrics_history');
                 
@@ -1778,8 +1762,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                     routines = JSON.parse(localRoutines);
                     historyData = localHistory ? JSON.parse(localHistory) : [];
                     savedStatusMap = JSON.parse(localStorage.getItem('LiftMetrics_saved_status') || '{}');
-                    
-                    // Sincronizza immediatamente i dati locali sul cloud vuoto
                     await syncDataToSupabase();
                 } else {
                     routines = JSON.parse(JSON.stringify(defaultRoutines));
@@ -1800,9 +1782,8 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
             localStorage.setItem('LiftMetrics_history', JSON.stringify(historyData));
             localStorage.setItem('LiftMetrics_saved_status', JSON.stringify(savedStatusMap));
             localStorage.setItem('LiftMetrics_current_key', currentRoutineKey);
-
         } catch (e) {
-            console.log("Nessun dato remoto trovato o errore di rete, mantengo i dati locali.");
+            console.log("Nessun dato remoto trovato.");
         }
     }
 
@@ -1811,13 +1792,12 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
             
-            // Primo tono acuto e forte al massimo volume (1.0)
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.type = 'square'; // Onda quadra, molto più tagliente e udibile rispetto alla sinusoidale
+            osc.type = 'square';
             osc.frequency.value = freq;
             
-            gain.gain.setValueAtTime(1.0, audioCtx.currentTime); // Volume massimo
+            gain.gain.setValueAtTime(1.0, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
             
             osc.connect(gain);
@@ -1854,7 +1834,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         document.getElementById('rename-routine-input').value = currentRoutineKey;
     }
 
-    function onRoutineSelected(val) {
+   function onRoutineSelected(val) {
         if (!val) return;
         currentRoutineKey = val;
         localStorage.setItem('LiftMetrics_current_key', currentRoutineKey);
@@ -1862,13 +1842,19 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         initActiveRoutineSelect();
         initRoutineSelectors();
         updateLiftMetricsDashboard();
-        showSummaryView();
-    }
 
-    function initRoutineSelectors() {
-        const keys = Object.keys(routines);
-        renderCustomDropdown('custom-edit-select', keys, currentRoutineKey, switchActiveRoutine);
-        document.getElementById('rename-routine-input').value = currentRoutineKey;
+        // Controlla se la schermata di modifica è attualmente attiva
+        const editModeView = document.getElementById('edit-mode-view');
+        const isEditing = editModeView && !editModeView.classList.contains('hidden');
+
+        if (isEditing) {
+            // Se siamo in modifica, ricarica direttamente i blocchi della nuova scheda scelta
+            renderEditRoutine();
+            document.getElementById('rename-routine-input').value = currentRoutineKey;
+        } else {
+            // Altrimenti mostra la normale vista di riepilogo
+            showSummaryView();
+        }
     }
 
     function switchActiveRoutine(key) {
@@ -2024,13 +2010,13 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         addSupersetRow();
     }
 
-   function addSupersetRow() {
+    function addSupersetRow() {
         const container = document.getElementById('superset-dynamic-rows');
         const rowId = 'sup-row-' + Date.now() + Math.random().toString(36).substring(2, 5);
         const div = document.createElement('div');
         div.className = 'superset-exercise-row-card';
         div.id = rowId;
-        div.style.cssText = "background: rgba(27,31,43,.72); padding: 12px; border-radius: 11px; margin-bottom: 8px; border: 1px solid rgba(255,255,255,.035);";
+        div.style.cssText = "background: rgba(27,31,43,.72); padding: 12px; border-radius: 11px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,.035); overflow: visible !important;";
         
         div.innerHTML = `
             <div style="display: flex; gap: 8px; margin-bottom: 8px;">
@@ -2042,54 +2028,73 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                     <span class="field-label">N° Serie</span>
                     <input type="number" placeholder="4" value="4" class="sup-ex-sets" onchange="updateSupersetCustomInputs('${rowId}')" style="margin-bottom:0 !important;">
                 </div>
+                <div style="display:flex; align-items:flex-end;">
+                    <button class="btn btn-danger btn-sm" onclick="document.getElementById('${rowId}').remove()" style="height: 41px;">✕</button>
+                </div>
             </div>
-            <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: flex-end;">
-                <div style="flex: 1;">
-                    <span class="field-label">Modalità Ripetizioni</span>
-                    <div class="custom-select-wrapper" id="${rowId}-mode-select">
-                        <div class="custom-select-trigger" onclick="toggleCustomDropdown('${rowId}-mode-select')">
-                            <span>Uguali per tutte le serie</span>
+
+            <!-- Riga Modalità Rep e Rep fisse/custom -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                <div>
+                    <span class="field-label">Modalità Rep</span>
+                    <div class="custom-select-wrapper" id="${rowId}-rep-mode-select">
+                        <div class="custom-select-trigger" onclick="toggleCustomDropdown('${rowId}-rep-mode-select', event)">
+                            <span>Uguali</span>
                             <span class="custom-select-arrow">▼</span>
                         </div>
                         <div class="custom-select-options"></div>
                     </div>
-                    <input type="hidden" class="sup-ex-mode-val" value="equal">
-                </div>
-                <div style="flex: 1;">
-                    <span class="field-label">Peso (kg)</span>
-                    <input type="number" placeholder="0" value="0" class="sup-ex-weight" style="margin-bottom:0 !important;">
+                    <input type="hidden" class="sup-ex-rep-mode-val" value="equal">
                 </div>
                 <div>
-                    <button class="btn btn-danger btn-sm" onclick="document.getElementById('${rowId}').remove()" style="height: 42px;">✕</button>
+                    <div class="${rowId}-std-rep-box">
+                        <span class="field-label">N° Ripetizioni</span>
+                        <input type="number" placeholder="10" value="10" class="sup-ex-reps" onchange="updateSupersetCustomInputs('${rowId}')" style="margin-bottom:0 !important;">
+                    </div>
                 </div>
             </div>
-            <!-- Container ripetizioni fisse -->
-            <div class="${rowId}-std-box">
-                <span class="field-label">N° Ripetizioni (rep)</span>
-                <input type="number" placeholder="10" value="10" class="sup-ex-reps" onchange="updateSupersetCustomInputs('${rowId}')" style="margin-bottom:0 !important;">
-            </div>
-            <!-- Container ripetizioni personalizzate -->
-            <div class="${rowId}-cust-box hidden">
+
+            <div class="${rowId}-cust-rep-box hidden" style="margin-bottom: 8px;">
                 <span class="field-label">Ripetizioni per ciascuna serie</span>
-                <div class="sup-custom-reps-list" style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;"></div>
+                <div class="sup-custom-reps-list" style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;"></div>
+            </div>
+
+            <!-- Riga Modalità Peso e Peso fisso/custom -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                <div>
+                    <span class="field-label">Modalità Peso</span>
+                    <div class="custom-select-wrapper" id="${rowId}-weight-mode-select">
+                        <div class="custom-select-trigger" onclick="toggleCustomDropdown('${rowId}-weight-mode-select', event)">
+                            <span>Uguale</span>
+                            <span class="custom-select-arrow">▼</span>
+                        </div>
+                        <div class="custom-select-options"></div>
+                    </div>
+                    <input type="hidden" class="sup-ex-weight-mode-val" value="equal">
+                </div>
+                <div>
+                    <div class="${rowId}-std-weight-box">
+                        <span class="field-label">Peso (kg)</span>
+                        <input type="number" placeholder="0" value="0" class="sup-ex-weight" onchange="updateSupersetCustomInputs('${rowId}')" style="margin-bottom:0 !important;">
+                    </div>
+                </div>
+            </div>
+
+            <div class="${rowId}-cust-weight-box hidden" style="margin-bottom: 4px;">
+                <span class="field-label" style="color:var(--if-blue);">Peso per ciascuna serie (kg):</span>
+                <div class="sup-custom-weight-list" style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px;"></div>
             </div>
         `;
         container.appendChild(div);
 
-        // Inizializza il menu a tendina personalizzato per questa riga del superset
-        const repModeOptions = [
-            { value: 'equal', label: 'Uguali per tutte le serie' },
-            { value: 'custom', label: 'Personalizzate per serie' }
-        ];
-
         renderCustomDropdown(
-            `${rowId}-mode-select`,
-            repModeOptions,
+            `${rowId}-rep-mode-select`,
+            [{ value: 'equal', label: 'Uguali' }, { value: 'custom', label: 'Personalizzate' }],
             'equal',
             (val) => {
-                div.querySelector('.sup-ex-mode-val').value = val;
-                const stdBox = div.querySelector(`.${rowId}-std-box`);
-                const custBox = div.querySelector(`.${rowId}-cust-box`);
+                div.querySelector('.sup-ex-rep-mode-val').value = val;
+                const stdBox = div.querySelector(`.${rowId}-std-rep-box`);
+                const custBox = div.querySelector(`.${rowId}-cust-rep-box`);
                 if (val === 'custom') {
                     stdBox.classList.add('hidden');
                     custBox.classList.remove('hidden');
@@ -2100,7 +2105,28 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                 }
             },
             null,
-            'Uguali per tutte le serie'
+            'Uguali'
+        );
+
+        renderCustomDropdown(
+            `${rowId}-weight-mode-select`,
+            [{ value: 'equal', label: 'Uguale' }, { value: 'custom', label: 'Personalizzato' }],
+            'equal',
+            (val) => {
+                div.querySelector('.sup-ex-weight-mode-val').value = val;
+                const stdBox = div.querySelector(`.${rowId}-std-weight-box`);
+                const custBox = div.querySelector(`.${rowId}-cust-weight-box`);
+                if (val === 'custom') {
+                    stdBox.classList.add('hidden');
+                    custBox.classList.remove('hidden');
+                    updateSupersetCustomInputs(rowId);
+                } else {
+                    stdBox.classList.remove('hidden');
+                    custBox.classList.add('hidden');
+                }
+            },
+            null,
+            'Uguale'
         );
 
         updateSupersetCustomInputs(rowId);
@@ -2110,69 +2136,47 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         const row = document.getElementById(rowId);
         if (!row) return;
         const setsCount = parseInt(row.querySelector('.sup-ex-sets').value) || 4;
+        
         const defaultRep = row.querySelector('.sup-ex-reps')?.value || 10;
-        const listContainer = row.querySelector('.sup-custom-reps-list');
-        if (!listContainer) return;
+        const repsListContainer = row.querySelector('.sup-custom-reps-list');
+        if (repsListContainer) {
+            repsListContainer.innerHTML = '';
+            for (let i = 1; i <= setsCount; i++) {
+                repsListContainer.innerHTML += `
+                    <div style="flex: 1; min-width: 40px; text-align: center;">
+                        <span style="font-size: 9px; color: var(--subtext);">Set ${i}</span>
+                        <input type="number" class="sup-custom-rep-input" value="${defaultRep}" style="text-align: center; padding: 4px !important; margin-bottom: 0 !important;">
+                    </div>
+                `;
+            }
+        }
 
-        listContainer.innerHTML = '';
-        for (let i = 1; i <= setsCount; i++) {
-            listContainer.innerHTML += `
-                <div style="flex: 1; min-width: 45px; text-align: center;">
-                    <span style="font-size: 9px; color: var(--subtext); display: block; margin-bottom: 2px;">Set ${i}</span>
-                    <input type="number" class="sup-custom-rep-input" value="${defaultRep}" style="text-align: center; padding: 6px !important; margin-bottom: 0 !important;">
-                </div>
-            `;
+        const defaultWeight = row.querySelector('.sup-ex-weight')?.value || 0;
+        const weightListContainer = row.querySelector('.sup-custom-weight-list');
+        if (weightListContainer) {
+            weightListContainer.innerHTML = '';
+            for (let i = 1; i <= setsCount; i++) {
+                weightListContainer.innerHTML += `
+                    <div style="flex: 1; min-width: 40px; text-align: center;">
+                        <span style="font-size: 9px; color: var(--subtext);">Set ${i}</span>
+                        <input type="number" class="sup-custom-weight-input" value="${defaultWeight}" style="text-align: center; padding: 4px !important; margin-bottom: 0 !important;">
+                    </div>
+                `;
+            }
         }
     }
 
-    function toggleSupersetMode(rowId) {
-        const row = document.getElementById(rowId);
-        if (!row) return;
-        const mode = row.querySelector('.sup-ex-mode').value;
-        const stdBox = row.querySelector('.sup-standard-reps-box');
-        const custBox = row.querySelector('.sup-custom-reps-box');
-
-        if (mode === 'custom') {
-            stdBox.classList.add('hidden');
-            custBox.classList.remove('hidden');
-            updateSupersetCustomInputs(rowId);
-        } else {
-            stdBox.classList.remove('hidden');
-            custBox.classList.add('hidden');
-        }
-    }
-
-    function updateSupersetCustomInputs(rowId) {
-        const row = document.getElementById(rowId);
-        if (!row) return;
-        const setsCount = parseInt(row.querySelector('.sup-ex-sets').value) || 4;
-        const defaultRep = row.querySelector('.sup-ex-reps')?.value || 10;
-        const listContainer = row.querySelector('.sup-custom-reps-list');
-        if (!listContainer) return;
-
-        listContainer.innerHTML = '';
-        for (let i = 1; i <= setsCount; i++) {
-            listContainer.innerHTML += `
-                <div style="flex: 1; min-width: 45px; text-align: center;">
-                    <span style="font-size: 9px; color: var(--subtext); display: block; margin-bottom: 2px;">Set ${i}</span>
-                    <input type="number" class="sup-custom-rep-input" value="${defaultRep}" style="text-align: center; padding: 6px !important; margin-bottom: 0 !important;">
-                </div>
-            `;
-        }
-    }
-
-   async function saveNewSupersetBlock() {
+    async function saveNewSupersetBlock() {
         const rows = document.querySelectorAll('#superset-dynamic-rows > div');
         const exercises = [];
 
         rows.forEach(r => {
             const name = r.querySelector('.sup-ex-name').value.trim();
             const sets = parseInt(r.querySelector('.sup-ex-sets').value) || 4;
-            const weight = parseFloat(r.querySelector('.sup-ex-weight').value) || 0;
-            const mode = r.querySelector('.sup-ex-mode-val').value;
-
+            
+            const repMode = r.querySelector('.sup-ex-rep-mode-val').value;
             let repsConfig;
-            if (mode === 'custom') {
+            if (repMode === 'custom') {
                 repsConfig = [];
                 r.querySelectorAll('.sup-custom-rep-input').forEach(input => {
                     repsConfig.push(parseInt(input.value) || 8);
@@ -2182,8 +2186,20 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                 repsConfig = Array(sets).fill(repsVal);
             }
 
+            const weightMode = r.querySelector('.sup-ex-weight-mode-val').value;
+            let weightConfig;
+            if (weightMode === 'custom') {
+                weightConfig = [];
+                r.querySelectorAll('.sup-custom-weight-input').forEach(input => {
+                    weightConfig.push(parseFloat(input.value) || 0);
+                });
+            } else {
+                const weightVal = parseFloat(r.querySelector('.sup-ex-weight').value) || 0;
+                weightConfig = Array(sets).fill(weightVal);
+            }
+
             if (name) {
-                exercises.push({ name, sets, reps: repsConfig, weight });
+                exercises.push({ name, sets, reps: repsConfig, weight: weightConfig });
             }
         });
 
@@ -2214,7 +2230,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         initInsertionTypeSelect();
     }
 
-   function addSingleExercise() {
+    function addSingleExercise() {
         const name = document.getElementById('single-name').value.trim();
         const restSet = parseInt(document.getElementById('single-rest-set').value) || 90;
         const restBlock = parseInt(document.getElementById('single-rest-block').value) || 120;
@@ -2228,7 +2244,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
 
         let setsCount = parseInt(document.getElementById('single-sets').value) || 4;
         
-        // Configurazione Ripetizioni
         let repsConfig;
         if (repMode === 'custom') {
             repsConfig = [];
@@ -2241,7 +2256,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
             repsConfig = Array(setsCount).fill(repsVal);
         }
 
-        // Configurazione Peso (supporta sia fisso che personalizzato per ogni serie)
         let weightConfig;
         if (weightMode === 'custom') {
             weightConfig = [];
@@ -2404,7 +2418,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                         const isSkipped = setObj.skipped;
                         const isLocked = workoutState.lockedSets[setKey];
                         const currentReps = Array.isArray(ex.reps) ? (setObj.reps ?? ex.reps[s - 1]) : (setObj.reps ?? ex.reps);
-                        const currentWeight = setObj.weight ?? (ex.weight || 0);
+                        const currentWeight = Array.isArray(ex.weight) ? (setObj.weight ?? ex.weight[s - 1]) : (setObj.weight ?? (ex.weight || 0));
                         const currentName = setObj.name ?? ex.name;
                         const isInteractive = (bIdx === activeBlockIdx && s === activeSetNum && !workoutState.isRest);
 
@@ -2477,8 +2491,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                             const isSkipped = setObj.skipped;
                             const isLocked = workoutState.lockedSets[setKey];
                             const currentReps = Array.isArray(ex.reps) ? (setObj.reps ?? ex.reps[s - 1]) : (setObj.reps ?? ex.reps);
-                                    // ... (il resto del codice continua uguale)
-                            const currentWeight = setObj.weight ?? (ex.weight || 0);
+                            const currentWeight = Array.isArray(ex.weight) ? (setObj.weight ?? ex.weight[s - 1]) : (setObj.weight ?? (ex.weight || 0));
                             const currentName = setObj.name ?? ex.name;
                             const isCurrentSubInteractive = isCurrentSetGroup && (exIdx === activeSubExIdx) && !workoutState.isRest;
 
@@ -2549,7 +2562,14 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         const key = `${bIdx}-${exIdx}-${setNum}`;
         const ex = routines[currentRoutineKey][bIdx].exercises[exIdx];
         if (!workoutState.completedSets[key]) {
-            workoutState.completedSets[key] = { name: ex.name, reps: ex.reps, weight: ex.weight || 0, done: false, skipped: false, time: workoutState.seconds };
+            workoutState.completedSets[key] = { 
+                name: ex.name, 
+                reps: Array.isArray(ex.reps) ? ex.reps[setNum - 1] : ex.reps, 
+                weight: Array.isArray(ex.weight) ? ex.weight[setNum - 1] : (ex.weight || 0), 
+                done: false, 
+                skipped: false, 
+                time: workoutState.seconds 
+            };
         }
         if (field === 'name') {
             workoutState.completedSets[key].name = val.trim();
@@ -2583,7 +2603,14 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         const setTimeElapsed = workoutState.seconds;
 
         if (!workoutState.completedSets[key]) {
-            workoutState.completedSets[key] = { name: ex.name, reps: ex.reps, weight: ex.weight || 0, done: true, skipped: false, time: setTimeElapsed };
+            workoutState.completedSets[key] = { 
+                name: ex.name, 
+                reps: Array.isArray(ex.reps) ? ex.reps[setNum - 1] : ex.reps, 
+                weight: Array.isArray(ex.weight) ? ex.weight[setNum - 1] : (ex.weight || 0), 
+                done: true, 
+                skipped: false, 
+                time: setTimeElapsed 
+            };
         } else {
             workoutState.completedSets[key].done = true;
             workoutState.completedSets[key].skipped = false;
@@ -2593,7 +2620,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         lockPreviousSet(bIdx, exIdx, setNum, false);
 
         const block = routines[currentRoutineKey][bIdx];
-        
         let restDuration = ex.restSet || 90;
         if (workoutState.savedRestSeconds !== null) {
             restDuration = workoutState.savedRestSeconds;
@@ -2645,7 +2671,14 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         const setTimeElapsed = workoutState.seconds;
 
         if (!workoutState.completedSets[key]) {
-            workoutState.completedSets[key] = { name: ex.name, reps: ex.reps, weight: ex.weight || 0, done: true, skipped: false, time: setTimeElapsed };
+            workoutState.completedSets[key] = { 
+                name: ex.name, 
+                reps: Array.isArray(ex.reps) ? ex.reps[setNum - 1] : ex.reps, 
+                weight: Array.isArray(ex.weight) ? ex.weight[setNum - 1] : (ex.weight || 0), 
+                done: true, 
+                skipped: false, 
+                time: setTimeElapsed 
+            };
         } else {
             workoutState.completedSets[key].done = true;
             workoutState.completedSets[key].skipped = false;
@@ -2725,12 +2758,20 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                 const targetExIdx = 0;
                 restDuration = block.exercises[0].restSet || 90;
                 const key = `${activeBlockIdx}-${targetExIdx}-${targetSet}`;
-                workoutState.completedSets[key] = { name: block.exercises[0].name, done: false, skipped: true, reps: block.exercises[0].reps, weight: block.exercises[0].weight || 0, time: 0 };
+                const ex = block.exercises[0];
+                workoutState.completedSets[key] = { 
+                    name: ex.name, 
+                    done: false, 
+                    skipped: true, 
+                    reps: Array.isArray(ex.reps) ? ex.reps[targetSet - 1] : ex.reps, 
+                    weight: Array.isArray(ex.weight) ? ex.weight[targetSet - 1] : (ex.weight || 0), 
+                    time: 0 
+                };
                 workoutState.lockedSets[key] = true;
 
                 lockPreviousSet(activeBlockIdx, targetExIdx, targetSet, false);
 
-                if (targetSet >= block.exercises[0].sets) {
+                if (targetSet >= ex.sets) {
                     if (activeBlockIdx >= routines[currentRoutineKey].length - 1) {
                         confirmAndTerminateWorkout();
                         return;
@@ -2745,9 +2786,17 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                 }
             } else {
                 const targetExIdx = activeSubExIdx;
-                restDuration = block.exercises[targetExIdx].restSet || 30;
+                const ex = block.exercises[targetExIdx];
+                restDuration = ex.restSet || 30;
                 const key = `${activeBlockIdx}-${targetExIdx}-${targetSet}`;
-                workoutState.completedSets[key] = { name: block.exercises[targetExIdx].name, done: false, skipped: true, reps: block.exercises[targetExIdx].reps, weight: block.exercises[targetExIdx].weight || 0, time: 0 };
+                workoutState.completedSets[key] = { 
+                    name: ex.name, 
+                    done: false, 
+                    skipped: true, 
+                    reps: Array.isArray(ex.reps) ? ex.reps[targetSet - 1] : ex.reps, 
+                    weight: Array.isArray(ex.weight) ? ex.weight[targetSet - 1] : (ex.weight || 0), 
+                    time: 0 
+                };
                 workoutState.lockedSets[key] = true;
 
                 lockPreviousSet(activeBlockIdx, targetExIdx, targetSet, true);
@@ -2800,11 +2849,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         if (blockToLock && blockToLock.exercises) {
             blockToLock.exercises.forEach((ex, exIdx) => {
                 const key = `${targetBlockIdx}-${exIdx}-${targetSetNum}`;
-                if (workoutState.completedSets[key]?.done || workoutState.completedSets[key]?.skipped) {
-                    workoutState.lockedSets[key] = true;
-                } else {
-                    workoutState.lockedSets[key] = true;
-                }
+                workoutState.lockedSets[key] = true;
             });
         }
 
@@ -2953,8 +2998,8 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                             }
                             if (workoutState.completedSets[key].done) {
                                 setsDataArr.push({
-                                    reps: workoutState.completedSets[key].reps ?? ex.reps,
-                                    weight: workoutState.completedSets[key].weight ?? (ex.weight || 0),
+                                    reps: workoutState.completedSets[key].reps ?? (Array.isArray(ex.reps) ? ex.reps[s - 1] : ex.reps),
+                                    weight: workoutState.completedSets[key].weight ?? (Array.isArray(ex.weight) ? ex.weight[s - 1] : (ex.weight || 0)),
                                     time: workoutState.completedSets[key].time ?? 0
                                 });
                             }
@@ -3088,7 +3133,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                 const displayRepVal = isArrayReps ? ex.reps[0] : ex.reps;
                 const uniqueSelectId = `edit-mode-${bIdx}-${exIdx}`;
 
-                // Gestione Peso (array o singolo)
                 const isArrayWeight = Array.isArray(ex.weight);
                 const displayWeightVal = isArrayWeight ? (ex.weight[0] || 0) : (ex.weight || 0);
                 const uniqueWeightSelectId = `edit-weight-mode-${bIdx}-${exIdx}`;
@@ -3142,7 +3186,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                 }
 
                 exercisesHTML += `
-                    <div style="background:#191c26; padding:10px; border-radius:10px; margin-bottom:8px;" id="edit-ex-card-${bIdx}-${exIdx}">
+                    <div style="background:#191c26; padding:10px; border-radius:10px; margin-bottom:8px; overflow: visible !important;" id="edit-ex-card-${bIdx}-${exIdx}">
                         <div class="form-group-3" style="margin-bottom:4px;">
                             <div>
                                 <span class="field-label">Nome Esercizio</span>
@@ -3155,7 +3199,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                             <div>
                                 <span class="field-label">Modalità Rep</span>
                                 <div class="custom-select-wrapper" id="${uniqueSelectId}">
-                                    <div class="custom-select-trigger" onclick="toggleCustomDropdown('${uniqueSelectId}')">
+                                    <div class="custom-select-trigger" onclick="toggleCustomDropdown('${uniqueSelectId}', event)">
                                         <span>${isArrayReps ? 'Personalizzate per serie' : 'Uguali per tutte le serie'}</span>
                                         <span class="custom-select-arrow">▼</span>
                                     </div>
@@ -3164,7 +3208,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                             </div>
                         </div>
 
-                        <!-- Campo rep fisse -->
                         <div id="edit-std-container-${bIdx}-${exIdx}" class="${isArrayReps ? 'hidden' : ''}" style="margin-top: 6px;">
                             <span class="field-label">N° Ripetizioni (rep)</span>
                             <input type="number" id="edit-std-reps-${bIdx}-${exIdx}" value="${displayRepVal}" onchange="updateEditableExercise(${bIdx}, ${exIdx}, 'reps', this.value)" style="margin-bottom:0 !important;">
@@ -3172,12 +3215,11 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
 
                         ${repsInputHtml}
 
-                        <!-- Sezione Gestione Peso -->
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; align-items: center;">
                             <div>
                                 <span class="field-label">Modalità Peso</span>
                                 <div class="custom-select-wrapper" id="${uniqueWeightSelectId}">
-                                    <div class="custom-select-trigger" onclick="toggleCustomDropdown('${uniqueWeightSelectId}')">
+                                    <div class="custom-select-trigger" onclick="toggleCustomDropdown('${uniqueWeightSelectId}', event)">
                                         <span>${isArrayWeight ? 'Personalizzato per serie' : 'Uguale per tutte le serie'}</span>
                                         <span class="custom-select-arrow">▼</span>
                                     </div>
@@ -3201,7 +3243,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                     </div>
                 `;
 
-                // Inizializza i menu a tendina grafici personalizzati per questo esercizio salvato
                 setTimeout(() => {
                     const repModeOptions = [
                         { value: 'equal', label: 'Uguali per tutte le serie' },
@@ -3308,20 +3349,21 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         const ex = routines[currentRoutineKey][bIdx].exercises[exIdx];
         const newSets = parseInt(val) || 1;
         ex.sets = newSets;
+        
         if (Array.isArray(ex.reps)) {
-            const currentVal = ex.reps[0] || 8;
-            ex.reps = Array(newSets).fill(currentVal);
+            const currentVals = ex.reps;
+            ex.reps = Array(newSets).fill(0).map((_, i) => currentVals[i] !== undefined ? currentVals[i] : (currentVals[currentVals.length - 1] || 8));
+        } else {
+            ex.reps = parseInt(ex.reps) || 8;
         }
+
+        if (Array.isArray(ex.weight)) {
+            const currentWeights = ex.weight;
+            ex.weight = Array(newSets).fill(0).map((_, i) => currentWeights[i] !== undefined ? currentWeights[i] : (currentWeights[currentWeights.length - 1] || 0));
+        }
+
         saveRoutinesStorage();
         renderEditRoutine();
-    }
-
-    function updateEditableExerciseArray(bIdx, exIdx, setIdx, val) {
-        const ex = routines[currentRoutineKey][bIdx].exercises[exIdx];
-        if (Array.isArray(ex.reps)) {
-            ex.reps[setIdx] = parseInt(val) || 0;
-            saveRoutinesStorage();
-        }
     }
 
     function updateEditableExerciseArray(bIdx, exIdx, setIdx, val) {
@@ -3385,9 +3427,14 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                         repsStr = `${e.sets} × ${e.reps} rep`;
                     }
                     
-                    const weightStr = (e.weight && e.weight > 0) ? ` (+${e.weight}kg)` : '';
+                    let weightStr = '';
+                    if (Array.isArray(e.weight)) {
+                        weightStr = ` (Pesi: ${e.weight.join(' · ')}kg)`;
+                    } else if (e.weight && e.weight > 0) {
+                        weightStr = ` (+${e.weight}kg)`;
+                    }
+
                     const formatDetails = Array.isArray(e.reps) ? `${e.sets} set (${repsStr})${weightStr}` : `${repsStr}${weightStr}`;
-                    
                     return `• ${e.name} (${formatDetails})`;
                 }).join('<br>');
                 
@@ -3410,11 +3457,11 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         document.getElementById('summary-mode-view').classList.add('hidden');
         document.getElementById('edit-mode-view').classList.remove('hidden');
         
-        // Nascondi entrambi i box all'apertura
         selectedInsertionType = '';
         document.getElementById('insertion-single-box').classList.add('hidden');
         document.getElementById('insertion-superset-box').classList.add('hidden');
 
+        initRoutineSelectors(); // <-- AGGIUNTO PER POPOLARE IL MENU IN CIMA
         renderEditRoutine();
         initSupersetBuilderRows();
         initRepModeSelect();
@@ -3600,7 +3647,6 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
 
         const chronologicalHistory = historyData.slice().reverse();
 
-        // Funzione per calcolare il valore reale ponderando Volume e Intensità (Rep consecutive + Zavorra)
         function calculateSessionIntensityVolume(setsData) {
             let sessionScore = 0;
             let totalReps = 0;
@@ -3613,11 +3659,8 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
 
                 if (w > 0) {
                     hasWeight = true;
-                    // Con zavorra: Peso x Rep con un piccolo bonus di intensità per serie lunghe
                     sessionScore += (w * r) * (1 + (r * 0.03));
                 } else {
-                    // A corpo libero: Intensità esponenziale sulle ripetizioni consecutive in un set.
-                    // Esempio: 3 rep valgono 3, ma 11 rep consecutive valgono molto di più perché l'intensità è altissima.
                     const intensityFactor = Math.pow(r, 1.3); 
                     sessionScore += intensityFactor;
                 }
@@ -3875,53 +3918,12 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('Service Worker registrato con successo:', reg.scope))
-                .catch(err => console.warn('Service Worker non disponibile o disabilitato in questo contesto: ', err.message));
+                .then(reg => console.log('Service Worker registrato:', reg.scope))
+                .catch(err => console.warn('Service Worker non disponibile: ', err.message));
         });
     }
 
-    async function takeAppScreenshot() {
-        try {
-            const targetElement = document.getElementById('swipe-container');
-            const canvas = await html2canvas(targetElement, {
-                backgroundColor: '#07080c',
-                scale: 2,
-                useCORS: true
-            });
-
-            canvas.toBlob(async (blob) => {
-                if (!blob) {
-                    await customAlert("Impossibile generare lo screenshot.");
-                    return;
-                }
-
-                const file = new File([blob], "LiftMetrics-allenamento.png", { type: "png" });
-
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    try {
-                        await navigator.share({
-                            title: 'LiftMetrics Workout',
-                            text: 'Ecco i miei progressi su LiftMetrics!',
-                            files: [file]
-                        });
-                        return;
-                    } catch (err) {
-                        if (err.name !== 'AbortError') console.log("Condivisione annullata o non riuscita", err);
-                    }
-                }
-
-                const link = document.createElement('a');
-                link.download = `LiftMetrics_${new Date().toISOString().slice(0,10)}.png`;
-                link.href = URL.createObjectURL(blob);
-                link.click();
-                URL.revokeObjectURL(link.href);
-            }, 'image/png');
-        } catch (e) {
-            console.error("Errore durante la cattura dello screenshot:", e);
-            await customAlert("Errore durante la creazione dello screenshot.");
-        }
-    }
-    let selectedInsertionType = ''; // Di default vuoto all'inizio
+    let selectedInsertionType = '';
 
     function initInsertionTypeSelect() {
         const typesOptions = [
