@@ -768,14 +768,21 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
             <div id="active-workout-view" class="hidden">
                 <!-- Contenitore unico con posizione sticky per bloccare HUD e Timer in alto -->
                 <div style="position: sticky; top: 0; z-index: 100; background: var(--bg); padding-top: 4px; padding-bottom: 8px;">
-                    <div class="workout-hud">
+                   <div class="workout-hud">
                         <div>
                             <div class="workout-hud-kicker">LIVE WORKOUT</div>
                             <div class="workout-hud-name" id="workout-hud-name">Allenamento</div>
                             <div class="workout-hud-meta" id="workout-hud-meta">Preparazione sessione…</div>
                         </div>
-                        <div class="workout-progress-ring" id="workout-progress-ring">
-                            <span class="workout-progress-value" id="workout-progress-value">0%</span>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <!-- Cronometro della sessione -->
+                            <div style="text-align: right;">
+                                <div style="font-size: 8px; font-weight: 900; color: #79849a; text-transform: uppercase; letter-spacing: 1px;">Tempo</div>
+                                <div id="workout-elapsed-time" style="font-size: 13px; font-weight: 800; color: var(--if-blue); font-variant-numeric: tabular-nums;">00:00</div>
+                            </div>
+                            <div class="workout-progress-ring" id="workout-progress-ring">
+                                <span class="workout-progress-value" id="workout-progress-value">0%</span>
+                            </div>
                         </div>
                     </div>
                     <div class="card timer-box" style="margin-bottom: 0px;">
@@ -925,12 +932,18 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                     </div>
 
                     <!-- Scelta Modalità Ripetizioni con stile coerente agli altri input -->
+                   <!-- Scelta Modalità Ripetizioni personalizzata in stile LiftMetrics -->
                     <div style="margin-bottom:8px;">
                         <span class="field-label">Modalità Ripetizioni</span>
-                        <select id="single-rep-mode" onchange="toggleRepModeInputs()">
-                            <option value="equal" style="background:#0f121b; color:#f7f8fc;">Uguali per tutte le serie</option>
-                            <option value="custom" style="background:#0f121b; color:#f7f8fc;">Personalizzate per serie</option>
-                        </select>
+                        <div class="custom-select-wrapper" id="custom-rep-mode-select">
+                            <div class="custom-select-trigger" onclick="toggleCustomDropdown('custom-rep-mode-select')">
+                                <span>Uguali per tutte le serie</span>
+                                <span class="custom-select-arrow">
+                                    <svg style="width:10px; height:10px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                                </span>
+                            </div>
+                            <div class="custom-select-options"></div>
+                        </div>
                     </div>
 
                     <!-- Contenitore per le ripetizioni standard (uguali) -->
@@ -1238,8 +1251,29 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
             optionsContainer.appendChild(optionEl);
         });
     }
-    function toggleRepModeInputs() {
-        const mode = document.getElementById('single-rep-mode').value;
+    let selectedRepMode = 'equal'; // Memorizza la modalità scelta
+
+    function initRepModeSelect() {
+        const repModeOptions = [
+            { value: 'equal', label: 'Uguali per tutte le serie' },
+            { value: 'custom', label: 'Personalizzate per serie' }
+        ];
+
+        renderCustomDropdown(
+            'custom-rep-mode-select',
+            repModeOptions,
+            selectedRepMode,
+            (val) => {
+                selectedRepMode = val;
+                toggleRepModeInputs(val);
+            },
+            null,
+            'Uguali per tutte le serie'
+        );
+    }
+
+    function toggleRepModeInputs(modeVal) {
+        const mode = modeVal || selectedRepMode;
         const standardContainer = document.getElementById('standard-reps-container');
         const customContainer = document.getElementById('custom-reps-container');
 
@@ -1309,14 +1343,26 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         const totalSets = blocks.reduce((n,b) => n + (b.exercises || []).reduce((x,e) => x + (parseInt(e.sets)||0), 0), 0);
         const completed = Object.values(workoutState.completedSets || {}).filter(x => x && x.done).length;
         const pct = totalSets ? Math.round(completed / totalSets * 100) : 0;
+        
         const name = document.getElementById('workout-hud-name');
         const meta = document.getElementById('workout-hud-meta');
         const value = document.getElementById('workout-progress-value');
         const ring = document.getElementById('workout-progress-ring');
+        const timeEl = document.getElementById('workout-elapsed-time');
+
         if (name) name.textContent = currentRoutineKey || 'Allenamento';
         if (meta) meta.textContent = `${completed} / ${totalSets} serie completate`;
         if (value) value.textContent = `${pct}%`;
         if (ring) ring.style.background = `conic-gradient(var(--if-blue) ${pct * 3.6}deg, rgba(255,255,255,.06) ${pct * 3.6}deg)`;
+
+        // Calcola e aggiorna il tempo trascorso dall'avvio della sessione
+        if (timeEl && workoutState.startTime) {
+            const now = new Date();
+            const elapsedSeconds = Math.floor((now - new Date(workoutState.startTime)) / 1000);
+            const mins = Math.floor(elapsedSeconds / 60).toString().padStart(2, '0');
+            const secs = (elapsedSeconds % 60).toString().padStart(2, '0');
+            timeEl.textContent = `${mins}:${secs}`;
+        }
     }
 
     function switchTab(index) {
@@ -1696,18 +1742,23 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         }
     }
 
-    function playBeep(freq = 880, type = 'sine', duration = 0.15) {
+   function playBeep(freq = 1200, type = 'sine', duration = 0.25) {
         try {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            // Primo tono acuto e forte al massimo volume (1.0)
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.type = type;
+            osc.type = 'square'; // Onda quadra, molto più tagliente e udibile rispetto alla sinusoidale
             osc.frequency.value = freq;
-            gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            
+            gain.gain.setValueAtTime(1.0, audioCtx.currentTime); // Volume massimo
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            
             osc.connect(gain);
             gain.connect(audioCtx.destination);
+            
             osc.start();
             osc.stop(audioCtx.currentTime + duration);
         } catch (e) {
@@ -1982,7 +2033,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         const weight = parseFloat(document.getElementById('single-weight').value) || 0;
         const restSet = parseInt(document.getElementById('single-rest-set').value) || 90;
         const restBlock = parseInt(document.getElementById('single-rest-block').value) || 120;
-        const repMode = document.getElementById('single-rep-mode').value;
+        const repMode = selectedRepMode;
 
         if (!name) {
             customAlert("Inserisci il nome dell'esercizio.");
@@ -2580,6 +2631,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
 
                 workoutState.seconds--;
                 updateTimerDisplay();
+                updateLiftMetricsWorkoutHud();
 
                 if (workoutState.seconds <= 0) {
                     finishRest();
@@ -2610,6 +2662,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                 const now = new Date();
                 workoutState.seconds = Math.max(0, Math.floor((now - workoutState.currentSetStartTime) / 1000));
                 updateTimerDisplay();
+                updateLiftMetricsWorkoutHud();
                 saveActiveWorkoutSession();
             }
         }, 1000);
@@ -2954,6 +3007,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
         document.getElementById('edit-mode-view').classList.remove('hidden');
         renderEditRoutine();
         initSupersetBuilderRows();
+        initRepModeSelect();
     }
 
     function renderHistory() {
@@ -3134,46 +3188,56 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
 
         const chronologicalHistory = historyData.slice().reverse();
 
+        // Funzione per calcolare il valore reale ponderando Volume e Intensità (Rep consecutive + Zavorra)
+        function calculateSessionIntensityVolume(setsData) {
+            let sessionScore = 0;
+            let totalReps = 0;
+            let hasWeight = false;
+
+            setsData.forEach(sd => {
+                const w = sd.weight || 0;
+                const r = sd.reps || 0;
+                totalReps += r;
+
+                if (w > 0) {
+                    hasWeight = true;
+                    // Con zavorra: Peso x Rep con un piccolo bonus di intensità per serie lunghe
+                    sessionScore += (w * r) * (1 + (r * 0.03));
+                } else {
+                    // A corpo libero: Intensità esponenziale sulle ripetizioni consecutive in un set.
+                    // Esempio: 3 rep valgono 3, ma 11 rep consecutive valgono molto di più perché l'intensità è altissima.
+                    const intensityFactor = Math.pow(r, 1.3); 
+                    sessionScore += intensityFactor;
+                }
+            });
+
+            return {
+                value: Math.round(sessionScore * 10) / 10,
+                unit: hasWeight ? 'kg (volume)' : 'punti (volume & intensità)',
+                totalReps: totalReps
+            };
+        }
+
         if (chartType === 'score') {
             banner.classList.add('hidden');
             let allProcessedSessions = [];
-            let baselineSetsTimes = null;
-            let baselineScore = null;
-            let prevScore = null;
+            let baselineValue = null;
+            let prevValue = null;
 
-            chronologicalHistory.forEach((h, hIdx) => {
+            chronologicalHistory.forEach((h) => {
                 const found = h.logs.find(l => l.name === selectedEx);
                 if (found && found.setsData && found.setsData.length > 0) {
                     const totalSets = found.setsData.length;
                     const maxWeight = Math.max(...found.setsData.map(sd => sd.weight));
                     
-                    let sessionScore = 0;
-                    found.setsData.forEach((sd, sIdx) => {
-                        const w = sd.weight || 0;
-                        const r = sd.reps || 0;
-                        const t = sd.time || 0;
-                        let setVal = w === 0 ? r : r * (1 + (w * 0.15));
+                    const sessionVol = calculateSessionIntensityVolume(found.setsData);
+                    const sessionScore = sessionVol.value;
 
-                        if (hIdx === 0) {
-                            if (!baselineSetsTimes) baselineSetsTimes = [];
-                            baselineSetsTimes[sIdx] = t;
-                        } else if (baselineSetsTimes && baselineSetsTimes[sIdx] !== undefined) {
-                            const baselineT = baselineSetsTimes[sIdx];
-                            const timeDiff = t - baselineT;
-                            if (timeDiff > 30) {
-                                const penalty = (timeDiff - 30) * 0.01;
-                                setVal = Math.max(0.1, setVal - penalty);
-                            }
-                        }
-                        sessionScore += setVal;
-                    });
+                    if (baselineValue === null) baselineValue = sessionScore;
 
-                    sessionScore = Math.round(sessionScore * 10) / 10;
-                    if (baselineScore === null) baselineScore = sessionScore;
-
-                    let cumulativeDiff = parseFloat((sessionScore - baselineScore).toFixed(1));
-                    let sessionDiff = prevScore !== null ? parseFloat((sessionScore - prevScore).toFixed(1)) : 0;
-                    prevScore = sessionScore;
+                    let cumulativeDiff = parseFloat((sessionScore - baselineValue).toFixed(1));
+                    let sessionDiff = prevValue !== null ? parseFloat((sessionScore - prevValue).toFixed(1)) : 0;
+                    prevValue = sessionScore;
 
                     allProcessedSessions.push({
                         date: h.date,
@@ -3182,6 +3246,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                         setsData: found.setsData,
                         maxWeight: maxWeight,
                         score: sessionScore,
+                        unit: sessionVol.unit,
                         cumulativeDiff: cumulativeDiff,
                         sessionDiff: sessionDiff
                     });
@@ -3227,8 +3292,8 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'Progresso dal primo allenamento (punti)', data: cumulativeData, borderColor: '#3b82f6', backgroundColor: grad, borderWidth: 3, fill: true, tension: 0.3, pointRadius: 5 },
-                        { label: 'vs Sessione Precedente (punti)', data: sessionData, borderColor: '#8b5cf6', borderWidth: 2, borderDash: [4, 4], fill: false, tension: 0.3, pointRadius: 4 }
+                        { label: 'Progresso Volume & Intensità', data: cumulativeData, borderColor: '#3b82f6', backgroundColor: grad, borderWidth: 3, fill: true, tension: 0.3, pointRadius: 5 },
+                        { label: 'vs Sessione Precedente', data: sessionData, borderColor: '#8b5cf6', borderWidth: 2, borderDash: [4, 4], fill: false, tension: 0.3, pointRadius: 4 }
                     ]
                 },
                 options: {
@@ -3238,7 +3303,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                         legend: { display: false },
                         title: {
                             display: true,
-                            text: `${selectedEx} (Volume, Intensità e Densità)`,
+                            text: `${selectedEx} (Volume & Intensità)`,
                             color: '#f7f8fc',
                             font: { size: 13, weight: 'bold' },
                             padding: { bottom: 12 }
@@ -3264,7 +3329,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                                 <span class="analytics-card-date">${s.date}</span>
                                 <span class="analytics-card-label">SESSIONE</span>
                             </div>
-                            <div class="analytics-delta">${signTot}${s.cumulativeDiff}</div>
+                            <div class="analytics-delta">${signTot}${s.score}</div>
                         </div>
                         <div class="analytics-card-body">
                             <span>${setsStr}</span>
@@ -3276,41 +3341,39 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
             detailsContainer.innerHTML = detailsHtml;
 
         } else {
-            let maxRepSessions = [];
+            let sessionScoresList = [];
 
             chronologicalHistory.forEach(h => {
                 const found = h.logs.find(l => l.name === selectedEx);
                 if (found && found.setsData && found.setsData.length > 0) {
-                    let bestSetScore = 0;
+                    const sessionVol = calculateSessionIntensityVolume(found.setsData);
                     let bestSetDesc = '';
+                    let maxSetVal = -1;
+
                     found.setsData.forEach(sd => {
-                        const w = sd.weight || 0;
-                        const r = sd.reps || 0;
-                        const effectiveRep = w === 0 ? r : r * (1 + (w * 0.05));
-                        if (effectiveRep > bestSetScore) {
-                            bestSetScore = effectiveRep;
-                            bestSetDesc = `${w}kg × ${r}r`;
+                        const sVal = (sd.weight || 0) === 0 ? Math.pow(sd.reps, 1.3) : (sd.weight * sd.reps);
+                        if (sVal > maxSetVal) {
+                            maxSetVal = sVal;
+                            bestSetDesc = `${sd.weight}kg × ${sd.reps}r`;
                         }
                     });
 
-                    bestSetScore = Math.round(bestSetScore * 10) / 10;
-                    maxRepSessions.push({
+                    sessionScoresList.push({
                         date: h.date,
                         dateIso: h.dateIso ? new Date(h.dateIso) : new Date(),
-                        maxRepScore: bestSetScore,
+                        totalScore: sessionVol.value,
                         bestSetDesc: bestSetDesc,
                         setsData: found.setsData
                     });
                 }
             });
 
-            if (maxRepSessions.length > 0) {
-                let firstScore = maxRepSessions[0].maxRepScore;
-                
-                const recentCount = Math.min(3, maxRepSessions.length);
+            if (sessionScoresList.length > 0) {
+                let firstScore = sessionScoresList[0].totalScore;
+                const recentCount = Math.min(3, sessionScoresList.length);
                 let recentSum = 0;
                 for (let i = 0; i < recentCount; i++) {
-                    recentSum += maxRepSessions[maxRepSessions.length - 1 - i].maxRepScore;
+                    recentSum += sessionScoresList[sessionScoresList.length - 1 - i].totalScore;
                 }
                 let recentAvgScore = recentSum / recentCount;
 
@@ -3334,13 +3397,13 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                 myChartInstance = null;
             }
 
-            if (maxRepSessions.length === 0) {
+            if (sessionScoresList.length === 0) {
                 detailsContainer.innerHTML = '<p style="color:var(--subtext); text-align:center; padding:15px; font-size:13px;">Nessun dato storico registrato.</p>';
                 return;
             }
 
-            const labels = maxRepSessions.map(s => s.date);
-            const dataValues = maxRepSessions.map(s => s.maxRepScore);
+            const labels = sessionScoresList.map(s => s.date);
+            const dataValues = sessionScoresList.map(s => s.totalScore);
 
             const ctx = canvas.getContext('2d');
             const grad = ctx.createLinearGradient(0, 0, 0, 220);
@@ -3352,7 +3415,7 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'Massimo Reps per Serie (con Zavorra)', data: dataValues, borderColor: '#10b981', backgroundColor: grad, borderWidth: 3, fill: true, tension: 0.3, pointRadius: 5 }
+                        { label: 'Volume e Intensità Totale', data: dataValues, borderColor: '#10b981', backgroundColor: grad, borderWidth: 3, fill: true, tension: 0.3, pointRadius: 5 }
                     ]
                 },
                 options: {
@@ -3375,19 +3438,19 @@ button, input, textarea, a { position: relative; z-index: 2; pointer-events: aut
                 }
             });
 
-            let detailsHtml = '<h3>BEST SET • STORICO PERFORMANCE</h3>';
-            maxRepSessions.slice().reverse().forEach(s => {
+            let detailsHtml = '<h3>SESSIONI • STORICO PERFORMANCE</h3>';
+            sessionScoresList.slice().reverse().forEach(s => {
                 detailsHtml += `
                     <div class="analytics-session-card positive">
                         <div class="analytics-card-head">
                             <div>
                                 <span class="analytics-card-date">${s.date}</span>
-                                <span class="analytics-card-label">BEST SET</span>
+                                <span class="analytics-card-label">INTENSITÀ & VOLUME</span>
                             </div>
-                            <div class="analytics-best-set">${s.bestSetDesc}</div>
+                            <div class="analytics-best-set">${s.totalScore}</div>
                         </div>
                         <div class="analytics-card-body">
-                            <span>Indice performance <b>${s.maxRepScore}</b></span>
+                            <span>Best set: <b>${s.bestSetDesc}</b></span>
                             <span class="analytics-session-delta">progressione</span>
                         </div>
                     </div>
