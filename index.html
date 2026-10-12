@@ -545,6 +545,8 @@
     .block-title { font-size: 14px; font-weight: 900!important; letter-spacing: -.2px; color: var(--text); }
     .set-input-group { display: flex; align-items: center; gap: 3px; }
     .form-group-3 { display: grid; grid-template-columns: 5fr 1.2fr 1.3fr; gap: 4px; margin-bottom: 8px; }
+    .form-group-name { display: grid; grid-template-columns: 1fr; margin-bottom: 6px; }
+    .form-group-details { display: grid; grid-template-columns: 1fr 2.4fr; gap: 6px; margin-bottom: 8px; }
     .form-group-4 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
     .form-group-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
     .superset-builder-box {
@@ -2102,23 +2104,20 @@
         div.id = rowId;
         div.style.cssText = "background: rgba(27,31,43,.72); padding: 12px; border-radius: 11px; margin-bottom: 10px; border: 1px solid rgba(255,255,255,.035); overflow: visible !important;";
         
-        div.innerHTML = `
-            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-                <div style="flex: 2;">
+       div.innerHTML = `
+            <div class="form-group-name" style="display: flex; justify-content: space-between; align-items: flex-end; gap: 6px;">
+                <div style="flex: 1;">
                     <span class="field-label">Esercizio</span>
                     <input type="text" placeholder="Es. Trazioni" class="sup-ex-name" style="margin-bottom:0 !important;">
                 </div>
-                <div style="flex: 1;">
+                <button class="btn btn-danger btn-sm" onclick="document.getElementById('${rowId}').remove()" style="height: 41px; padding: 0 12px;" title="Rimuovi esercizio">✕</button>
+            </div>
+
+            <div class="form-group-details" style="margin-top: 6px;">
+                <div>
                     <span class="field-label">N° Serie</span>
                     <input type="number" placeholder="4" value="4" class="sup-ex-sets" onchange="updateSupersetCustomInputs('${rowId}')" style="margin-bottom:0 !important;">
                 </div>
-                <div style="display:flex; align-items:flex-end;">
-                    <button class="btn btn-danger btn-sm" onclick="document.getElementById('${rowId}').remove()" style="height: 41px;">✕</button>
-                </div>
-            </div>
-
-            <!-- Riga Modalità Rep e Rep fisse/custom -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
                 <div>
                     <span class="field-label">Modalità Rep</span>
                     <div class="custom-select-wrapper" id="${rowId}-rep-mode-select">
@@ -2130,12 +2129,11 @@
                     </div>
                     <input type="hidden" class="sup-ex-rep-mode-val" value="equal">
                 </div>
-                <div>
-                    <div class="${rowId}-std-rep-box">
-                        <span class="field-label">N° Ripetizioni</span>
-                        <input type="number" placeholder="10" value="10" class="sup-ex-reps" onchange="updateSupersetCustomInputs('${rowId}')" style="margin-bottom:0 !important;">
-                    </div>
-                </div>
+            </div>
+
+            <div class="${rowId}-std-rep-box" style="margin-bottom: 8px;">
+                <span class="field-label">N° Ripetizioni</span>
+                <input type="number" placeholder="10" value="10" class="sup-ex-reps" onchange="updateSupersetCustomInputs('${rowId}')" style="margin-bottom:0 !important;">
             </div>
 
             <div class="${rowId}-cust-rep-box hidden" style="margin-bottom: 8px;">
@@ -3333,11 +3331,14 @@
 
                 exercisesHTML += `
                     <div style="background:#191c26; padding:10px; border-radius:10px; margin-bottom:8px; overflow: visible !important;" id="edit-ex-card-${bIdx}-${exIdx}">
-                        <div class="form-group-3" style="margin-bottom:4px;">
+                        <div class="form-group-name">
                             <div>
                                 <span class="field-label">Nome Esercizio</span>
                                 <input type="text" value="${ex.name}" onchange="updateEditableExercise(${bIdx}, ${exIdx}, 'name', this.value)" placeholder="Esercizio" style="margin-bottom:0 !important;">
                             </div>
+                        </div>
+
+                        <div class="form-group-details">
                             <div>
                                 <span class="field-label">Serie</span>
                                 <input type="number" id="edit-sets-${bIdx}-${exIdx}" value="${ex.sets}" onchange="updateEditableExerciseSetsCount(${bIdx}, ${exIdx}, this.value)" placeholder="Serie" style="margin-bottom:0 !important;">
@@ -3354,7 +3355,7 @@
                             </div>
                         </div>
 
-                        <div id="edit-std-container-${bIdx}-${exIdx}" class="${isArrayReps ? 'hidden' : ''}" style="margin-top: 6px;">
+                        <div id="edit-std-container-${bIdx}-${exIdx}" class="${isArrayReps ? 'hidden' : ''}" style="margin-bottom: 6px;">
                             <span class="field-label">N° Ripetizioni (rep)</span>
                             <input type="number" id="edit-std-reps-${bIdx}-${exIdx}" value="${displayRepVal}" onchange="updateEditableExercise(${bIdx}, ${exIdx}, 'reps', this.value)" style="margin-bottom:0 !important;">
                         </div>
@@ -3383,7 +3384,7 @@
                         <div style="display:flex; justify-content:flex-end; align-items:center; margin-top:8px;">
                             <div style="display:flex; align-items:center; gap:6px;">
                                 <span class="field-label" style="margin-bottom:0;">Rec. Serie (sec):</span>
-                                <input type="number" value="${ex.restSet || (block.isSuperset ? 30 : 90)}" onchange="updateEditableExercise(${bIdx}, ${exIdx}, 'restSet', this.value)" style="width:65px; text-align:center; margin-bottom:0 !important;">
+                                <input type="number" value="${ex.restSet || 30}" onchange="updateEditableExercise(${bIdx}, ${exIdx}, 'restSet', this.value)" style="width:65px; text-align:center; margin-bottom:0 !important;">
                             </div>
                         </div>
                     </div>
