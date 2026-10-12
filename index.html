@@ -3348,23 +3348,36 @@
                 }, 0);
             });
 
-            const supersetBadge = block.isSuperset ? `<span style="background:var(--superset-border); color:white; font-size:9px; padding:2px 6px; border-radius:4px; margin-left:6px;">Superset</span>` : `<span style="color:var(--subtext); font-size:11px; margin-left:6px;">Singolo</span>`;
             const isLastBlock = (bIdx === blocks.length - 1);
 
+            const isSuperEdit = block.isSuperset;
+            const editBorderColor = isSuperEdit ? 'rgba(155,114,255,0.45)' : 'rgba(109,140,255,0.3)';
+            const editShadowColor = isSuperEdit ? 'rgba(124,92,255,0.22)' : 'rgba(109,140,255,0.12)';
+            const editTitleGradient = isSuperEdit 
+                ? 'linear-gradient(110deg, #ffffff 40%, #c084fc 100%)' 
+                : 'linear-gradient(110deg, #ffffff 40%, var(--if-blue) 100%)';
+            
+            // Definiamo correttamente il badge per la schermata di modifica
+            const supersetBadge = isSuperEdit 
+                ? '<span style="font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 99px; background: rgba(155,114,255,0.15); color: #c084fc; border: 1px solid rgba(155,114,255,0.45);">Superset</span>' 
+                : '';
+
             container.innerHTML += `
-                <div class="edit-block-item ${block.isSuperset ? 'superset-item' : ''}">
+                <div class="edit-block-item ${block.isSuperset ? 'superset-item' : ''}" style="background: linear-gradient(145deg, rgba(20,24,35,0.95), rgba(10,13,20,0.97)) !important; border: 1px solid ${editBorderColor} !important; box-shadow: 0 10px 30px ${editShadowColor}, inset 0 1px 0 rgba(255,255,255,0.05) !important;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                        <span style="font-size:12px; font-weight:700; color:var(--text); white-space:normal; word-break:break-word;">Blocco ${bIdx + 1} ${supersetBadge}</span>
+                        <span style="font-size:13px; font-weight:900; background: ${editTitleGradient}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; white-space:normal; word-break:break-word; display:flex; align-items:center; gap:6px;">
+                            Blocco ${bIdx + 1} ${supersetBadge}
+                        </span>
                         <div style="display:flex; gap:4px; align-items:center;">
                             <button class="btn btn-sm" onclick="moveBlockUp(${bIdx})" ${bIdx === 0 ? 'disabled style="opacity:0.3"' : ''}>▲</button>
                             <button class="btn btn-sm" onclick="moveBlockDown(${bIdx})" ${isLastBlock ? 'disabled style="opacity:0.3"' : ''}>▼</button>
-                            <button class="btn btn-danger btn-sm" onclick="removeBlock(${bIdx})">Elimina Blocco</button>
+                            <button class="btn btn-danger btn-sm" onclick="removeBlock(${bIdx})">Elimina</button>
                         </div>
                     </div>
                     ${exercisesHTML}
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; border-top:1px solid var(--card-border); padding-top:8px; opacity: ${isLastBlock ? '0.4' : '1'};">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; border-top:1px solid rgba(255,255,255,0.06); padding-top:8px; opacity: ${isLastBlock ? '0.4' : '1'};">
                         <span class="field-label" style="margin-bottom:0;">
-                            Recupero Fine Blocco (sec) ${isLastBlock ? '<i style="color:var(--subtext); font-weight:normal;">(Non necessario per l\'ultimo blocco)</i>' : ''}:
+                            Recupero Fine Blocco (sec) ${isLastBlock ? '<i style="color:var(--subtext); font-weight:normal;">(Ultimo blocco)</i>' : ''}:
                         </span>
                         <input type="number" value="${block.restAfterBlock || 120}" ${isLastBlock ? 'disabled' : ''} onchange="updateBlockRest(${bIdx}, this.value)" style="width:70px; text-align:center; margin-bottom:0 !important; ${isLastBlock ? 'cursor:not-allowed;' : ''}">
                     </div>
@@ -3479,11 +3492,29 @@
                 const isLastBlock = (bIdx === blocks.length - 1);
                 const restInfoHTML = isLastBlock ? '' : `<div style="font-size:11px; color:var(--subtext); margin-top:8px;">Recupero fine blocco: ${block.restAfterBlock || 120}s</div>`;
 
+                const isSuper = block.isSuperset;
+                const borderColor = isSuper ? 'rgba(155,114,255,0.45)' : 'rgba(109,140,255,0.35)';
+                const shadowColor = isSuper ? 'rgba(124,92,255,0.15)' : 'rgba(109,140,255,0.08)';
+                const badgeBg = isSuper ? 'rgba(155,114,255,0.15)' : 'rgba(109,140,255,0.12)';
+                const badgeColor = isSuper ? '#c084fc' : 'var(--if-blue)';
+                const titleGradient = isSuper 
+                    ? 'linear-gradient(110deg, #ffffff 30%, #c084fc 100%)' 
+                    : 'linear-gradient(110deg, #ffffff 30%, var(--if-blue) 100%)';
+
                 container.innerHTML += `
-                    <div class="card" style="margin-bottom:10px; background:#11131a;">
-                        <h4 style="font-size:15px; margin-bottom:6px; color:var(--text); white-space:normal; word-break:break-word;">${tag}Blocco ${bIdx + 1}</h4>
-                        <div style="font-size:13px; color:var(--subtext); line-height:1.4; word-break:break-word;">${listText}</div>
-                        ${restInfoHTML}
+                    <div style="background: linear-gradient(145deg, rgba(18,22,32,0.95), rgba(10,13,20,0.96)); border: 1px solid ${borderColor}; border-radius: 19px; padding: 16px; margin-bottom: 12px; box-shadow: 0 10px 30px ${shadowColor}, inset 0 1px 0 rgba(255,255,255,0.04); backdrop-filter: blur(16px); transition: all 0.25s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.055);">
+                            <h4 style="font-size: 14px; font-weight: 900; letter-spacing: -0.2px; background: ${titleGradient}; -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: flex; align-items: center; gap: 6px;">
+                                Blocco ${bIdx + 1}
+                            </h4>
+                            <span style="font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 99px; background: ${badgeBg}; color: ${badgeColor}; border: 1px solid ${borderColor};">
+                                ${isSuper ? 'Superset' : 'Attivo'}
+                            </span>
+                        </div>
+                        <div style="font-size: 13px; color: var(--subtext); line-height: 1.6; word-break: break-word; display: flex; flex-direction: column; gap: 4px;">
+                            ${listText}
+                        </div>
+                        ${restInfoHTML ? `<div style="font-size: 11px; color: var(--if-muted); margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,0.04); display: flex; align-items: center; gap: 4px;">⏱️ ${restInfoHTML.replace(/<[^>]*>/g, '')}</div>` : ''}
                     </div>
                 `;
             });
@@ -3796,13 +3827,6 @@
                     maintainAspectRatio: false,
                     plugins: { 
                         legend: { display: false },
-                        title: {
-                            display: true,
-                            text: `${selectedEx} (Volume & Intensità)`,
-                            color: '#f7f8fc',
-                            font: { size: 13, weight: 'bold' },
-                            padding: { bottom: 12 }
-                        }
                     },
                     scales: {
                         x: { grid: { color: 'rgba(38, 41, 54, 0.5)' }, ticks: { color: '#94a3b8', font: { size: 11 } } },
@@ -3918,13 +3942,6 @@
                     maintainAspectRatio: false,
                     plugins: { 
                         legend: { display: false },
-                        title: {
-                            display: true,
-                            text: `${selectedEx} (Miglioramento Complessivo)`,
-                            color: '#f7f8fc',
-                            font: { size: 13, weight: 'bold' },
-                            padding: { bottom: 12 }
-                        }
                     },
                     scales: {
                         x: { grid: { color: 'rgba(38, 41, 54, 0.5)' }, ticks: { color: '#94a3b8', font: { size: 11 } } },
