@@ -544,7 +544,7 @@
     .block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 11px; padding-bottom: 10px!important; border-bottom: 1px solid rgba(255,255,255,.055); }
     .block-title { font-size: 14px; font-weight: 900!important; letter-spacing: -.2px; color: var(--text); }
     .set-input-group { display: flex; align-items: center; gap: 3px; }
-    .form-group-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+    .form-group-3 { display: grid; grid-template-columns: 3.2fr 0.8fr 1.6fr; gap: 6px; margin-bottom: 8px; }
     .form-group-4 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
     .form-group-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
     .superset-builder-box {
@@ -3479,8 +3479,8 @@
                             Blocco ${bIdx + 1} ${supersetBadge}
                         </span>
                         <div style="display:flex; gap:4px; align-items:center;">
-                            <button class="btn btn-sm" onclick="moveBlockUp(${bIdx})" ${bIdx === 0 ? 'disabled style="opacity:0.3"' : ''}>▲</button>
-                            <button class="btn btn-sm" onclick="moveBlockDown(${bIdx})" ${isLastBlock ? 'disabled style="opacity:0.3"' : ''}>▼</button>
+                            <button class="btn btn-sm" onclick="moveBlockUp(${bIdx})" ${bIdx === 0 ? 'disabled style="opacity:0.3"' : ''} title="Sposta blocco di una posizione in su">▲ Su</button>
+                            <button class="btn btn-sm" onclick="moveBlockDown(${bIdx})" ${isLastBlock ? 'disabled style="opacity:0.3"' : ''} title="Sposta blocco di una posizione in giù">▼ Giù</button>
                             <button class="btn btn-danger btn-sm" onclick="removeBlock(${bIdx})">Elimina</button>
                         </div>
                     </div>
