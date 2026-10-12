@@ -1,4 +1,4 @@
-const CACHE_NAME = 'LiftMetrics-cache-v2.4.2'; // Incrementa questa versione ad ogni modifica importante
+const CACHE_NAME = 'LiftMetrics-cache-v2.4.3'; // Incrementa questa versione ad ogni modifica importante
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
