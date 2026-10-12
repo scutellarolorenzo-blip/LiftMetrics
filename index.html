@@ -796,7 +796,11 @@
                     </div>
                     <div class="card timer-box" style="margin-bottom: 0px;">
                         <div id="timer-status" class="timer-status">ESERCIZIO IN CORSO</div>
-                        <div id="timer-display" class="timer-display">00:00</div>
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 12px; margin: 12px 0 18px; padding: 0 6px;">
+                            <button class="btn" onclick="adjustTimer(-10)" style="background: linear-gradient(135deg, rgba(109, 140, 255, 0.18), rgba(154, 124, 255, 0.12)); border: 1px solid rgba(109, 140, 255, 0.35); color: var(--if-blue); padding: 10px 12px; font-weight: 900; font-size: 12px; min-width: 52px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); backdrop-filter: blur(12px); flex-shrink: 0;" title="Riduci di 10 secondi">-10s</button>
+                            <div id="timer-display" class="timer-display" style="margin: 0 !important; padding-right: 4px; letter-spacing: -2px !important; flex-shrink: 1;">00:00</div>
+                            <button class="btn" onclick="adjustTimer(10)" style="background: linear-gradient(135deg, rgba(109, 140, 255, 0.18), rgba(154, 124, 255, 0.12)); border: 1px solid rgba(109, 140, 255, 0.35); color: var(--if-blue); padding: 10px 12px; font-weight: 900; font-size: 12px; min-width: 52px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); backdrop-filter: blur(12px); flex-shrink: 0;" title="Aumenta di 10 secondi">+10s</button>
+                        </div>
                         <div class="btn-group" id="timer-controls"></div>
                     </div>
                 </div>
@@ -1533,8 +1537,8 @@
         document.getElementById('new-password').value = '';
         document.getElementById('confirm-new-password').value = '';
     }
-
-    function showMainApp() {
+ 
+   function showMainApp() {
         document.getElementById('auth-container').classList.add('hidden');
         document.getElementById('main-app-container').classList.remove('hidden');
         document.getElementById('logout-btn').classList.remove('hidden');
@@ -1558,6 +1562,36 @@
 
         const hasActiveSession = loadActiveWorkoutSession();
 
+       const savedTab = localStorage.getItem('LiftMetrics_current_tab');
+        const targetTab = savedTab !== null ? parseInt(savedTab) : 0;
+        const savedSubView = localStorage.getItem('LiftMetrics_sub_view');
+
+        // Recupero dei log temporanei del riepilogo se presenti nel localStorage
+        if (savedSubView === 'workout_summary') {
+            const savedLogs = localStorage.getItem('LiftMetrics_summary_logs');
+            const savedDuration = localStorage.getItem('LiftMetrics_summary_duration');
+            if (savedLogs) {
+                try { currentSessionLogsTemp = JSON.parse(savedLogs); } catch(e){}
+            }
+            if (savedDuration) {
+                currentDurationMinutesTemp = parseInt(savedDuration) || 1;
+            }
+        }
+
+        currentTabIndex = targetTab;
+        
+        const buttons = document.querySelectorAll('.tab-btn');
+        buttons.forEach((b, idx) => {
+            if (idx === targetTab) b.classList.add('active');
+            else b.classList.remove('active');
+        });
+
+        tabIds.forEach((id, idx) => {
+            const content = document.getElementById(id);
+            if (idx === targetTab) content.classList.add('active');
+            else content.classList.remove('active');
+        });
+
         if (hasActiveSession) {
             document.getElementById('start-session-view').classList.add('hidden');
             document.getElementById('active-workout-view').classList.remove('hidden');
@@ -1571,40 +1605,52 @@
                 startWorkTimer(true);
             }
         } else {
-            const savedTab = localStorage.getItem('LiftMetrics_current_tab');
-            const targetTab = savedTab !== null ? parseInt(savedTab) : 0;
-
-            initActiveRoutineSelect();
-            updateLiftMetricsDashboard();
-
-            // Attiva il tab principale corretto
-            switchTab(targetTab);
-
-            // CONTROLLA SE C'ERA UNA SOTTO-VISTA ATTIVA PRIMA DEL REFRESH E RIPRISTINALA
-            const savedSubView = localStorage.getItem('LiftMetrics_sub_view');
-
+            // CONTROLLO PERSISTENTE PER IL RIEPILOGO POST-ALLENAMENTO
             if (targetTab === 0 && savedSubView === 'workout_summary' && currentSessionLogsTemp.length > 0) {
-                // Se eri nel riepilogo fine allenamento (Tab Allenamento)
                 document.getElementById('start-session-view').classList.add('hidden');
                 document.getElementById('active-workout-view').classList.add('hidden');
                 document.getElementById('workout-summary-view').classList.remove('hidden');
                 document.getElementById('main-nav-tabs').style.display = 'none';
                 refreshSummaryDisplay();
-            } else if (targetTab === 1 && savedSubView === 'routine_edit') {
-                // Se eri nella schermata di modifica (Tab Scheda)
-                enableEditMode();
-            }
-        }
-
-        fetchRemoteData().then(() => {
-            if (!workoutState.active) {
-                if (routines[currentRoutineKey]) {
-                    initActiveRoutineSelect();
-                    updateLiftMetricsDashboard();
+                return; // Impedisce il reset alla home page
+            } else if (targetTab === 0) {
+                document.getElementById('start-session-view').classList.remove('hidden');
+                document.getElementById('active-workout-view').classList.add('hidden');
+                document.getElementById('workout-summary-view').classList.add('hidden');
+                document.getElementById('main-nav-tabs').style.display = 'grid';
+            } else if (targetTab === 1) {
+                initRoutineSelectors();
+                if (savedSubView === 'routine_edit') {
+                    enableEditMode();
+                } else {
                     showSummaryView();
                 }
+            } else {
+                if (targetTab === 3) renderHistory();
+                if (targetTab === 2) initChartSelect();
             }
-        });
+
+            initActiveRoutineSelect();
+            updateLiftMetricsDashboard();
+        }
+
+        // Sincronizzazione remota in background standard per tutte le altre schermate
+        if (navigator.onLine && currentUser) {
+            db.from('LiftMetrics_data').select('*').eq('id', currentUser.id).single().then(({ data }) => {
+                if (data && data.routines && !workoutState.active) {
+                    routines = data.routines;
+                    historyData = data.history || [];
+                    savedStatusMap = data.saved_status || {};
+                    saveRoutinesStorage();
+                    if (targetTab === 1 && localStorage.getItem('LiftMetrics_sub_view') !== 'routine_edit') {
+                        showSummaryView();
+                    } else if (targetTab === 0) {
+                        initActiveRoutineSelect();
+                        updateLiftMetricsDashboard();
+                    }
+                }
+            });
+        }
     }
 
     async function handleForgotPassword() {
@@ -1826,10 +1872,10 @@
             
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.type = 'square';
+            osc.type = type; 
             osc.frequency.value = freq;
             
-            gain.gain.setValueAtTime(1.0, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
             
             osc.connect(gain);
@@ -2260,9 +2306,12 @@
         document.getElementById('insertion-single-box').classList.add('hidden');
         document.getElementById('insertion-superset-box').classList.add('hidden');
         initInsertionTypeSelect();
+
+        // Popup di conferma in stile con l'app per il superset
+        await customAlert("Superset aggiunto con successo alla scheda!", "Nuovo Superset");
     }
 
-    function addSingleExercise() {
+    async function addSingleExercise() {
         const name = document.getElementById('single-name').value.trim();
         const restSet = parseInt(document.getElementById('single-rest-set').value) || 90;
         const restBlock = parseInt(document.getElementById('single-rest-block').value) || 120;
@@ -2318,6 +2367,9 @@
         document.getElementById('insertion-single-box').classList.add('hidden');
         document.getElementById('insertion-superset-box').classList.add('hidden');
         initInsertionTypeSelect();
+
+        // Popup di conferma in stile con l'app
+        await customAlert("Esercizio singolo aggiunto con successo alla scheda!", "Nuovo Esercizio");
     }
 
     function moveBlockUp(bIdx) {
@@ -2406,12 +2458,19 @@
         return false;
     }
 
+    let countdownInterval = null;
+
     function startWorkoutSession() {
         localStorage.setItem('LiftMetrics_current_key', currentRoutineKey);
 
         document.getElementById('start-session-view').classList.add('hidden');
         document.getElementById('active-workout-view').classList.remove('hidden');
         
+        const countdownView = document.getElementById('workout-countdown-view');
+        if (countdownView) countdownView.classList.add('hidden');
+
+        if (countdownInterval) clearInterval(countdownInterval);
+
         workoutState.active = true;
         workoutState.startTime = new Date();
         workoutState.completedSets = {};
@@ -2945,7 +3004,7 @@
         }, 1000);
     }
 
-    function updateTimerDisplay() {
+   function updateTimerDisplay() {
         const statusDiv = document.getElementById('timer-status');
         const displayDiv = document.getElementById('timer-display');
         const controlsDiv = document.getElementById('timer-controls');
@@ -2956,6 +3015,25 @@
         const s = (Math.abs(workoutState.seconds) % 60).toString().padStart(2, '0');
         if (displayDiv) displayDiv.innerText = `${m}:${s}`;
 
+        // Mostra i pulsanti -10s e +10s solo se siamo in fase di recupero (isRest === true)
+        const adjustmentButtonsHtml = workoutState.isRest ? `
+            <button class="btn" onclick="adjustTimer(-10)" style="background: linear-gradient(135deg, rgba(109, 140, 255, 0.18), rgba(154, 124, 255, 0.12)); border: 1px solid rgba(109, 140, 255, 0.35); color: var(--if-blue); padding: 10px 12px; font-weight: 900; font-size: 12px; min-width: 52px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); backdrop-filter: blur(12px); flex-shrink: 0;" title="Riduci di 10 secondi">-10s</button>
+        ` : '';
+
+        const adjustmentRightButtonsHtml = workoutState.isRest ? `
+            <button class="btn" onclick="adjustTimer(10)" style="background: linear-gradient(135deg, rgba(109, 140, 255, 0.18), rgba(154, 124, 255, 0.12)); border: 1px solid rgba(109, 140, 255, 0.35); color: var(--if-blue); padding: 10px 12px; font-weight: 900; font-size: 12px; min-width: 52px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3); backdrop-filter: blur(12px); flex-shrink: 0;" title="Aumenta di 10 secondi">+10s</button>
+        ` : '';
+
+        // Aggiorna dinamicamente anche il contenitore centrale dei secondi
+        const timerRowParent = displayDiv ? displayDiv.parentElement : null;
+        if (timerRowParent) {
+            timerRowParent.innerHTML = `
+                ${adjustmentButtonsHtml}
+                <div id="timer-display" class="timer-display" style="margin: 0 !important; padding-right: 4px; letter-spacing: -2px !important; flex-shrink: 1;">${m}:${s}</div>
+                ${adjustmentRightButtonsHtml}
+            `;
+        }
+
         if (controlsDiv) {
             controlsDiv.innerHTML = `
                 <button class="btn" onclick="togglePause()">${workoutState.isPaused ? 'Riprendi' : 'Pausa'}</button>
@@ -2964,6 +3042,21 @@
                 <button class="btn btn-success" onclick="confirmAndTerminateWorkout()">Allenamento Terminato</button>
             `;
         }
+    }
+
+    function adjustTimer(amount) {
+        if (workoutState.isRest) {
+            workoutState.seconds = Math.max(0, workoutState.seconds + amount);
+            updateTimerDisplay();
+        } else {
+            if (workoutState.currentSetStartTime) {
+                // Spostando il timestamp di inizio, il tempo trascorso aumenterà o diminuirà dinamicamente
+                workoutState.currentSetStartTime = new Date(workoutState.currentSetStartTime.getTime() - (amount * 1000));
+                workoutState.seconds = Math.max(0, workoutState.seconds + amount);
+                updateTimerDisplay();
+            }
+        }
+        saveActiveWorkoutSession();
     }
 
     function togglePause() {
@@ -3004,13 +3097,13 @@
         initActiveRoutineSelect();
     }
 
-    function terminateWorkout() {
+   function terminateWorkout() {
         if (workoutState.interval) clearInterval(workoutState.interval);
         
         currentDurationMinutesTemp = 1;
         const now = new Date();
-        if (workoutState.active) {
-            currentDurationMinutesTemp = workoutState.startTime ? Math.max(1, Math.round((now - workoutState.startTime) / 60000)) : 1;
+        if (workoutState.startTime) {
+            currentDurationMinutesTemp = Math.max(1, Math.round((now - new Date(workoutState.startTime)) / 60000));
         }
 
         const routine = routines[currentRoutineKey];
@@ -3044,17 +3137,23 @@
             });
         }
 
-        refreshSummaryDisplay();
-
-        document.getElementById('active-workout-view').classList.add('hidden');
-        document.getElementById('workout-summary-view').classList.remove('hidden');
-        document.getElementById('main-nav-tabs').style.display = 'none';
-
-        // <-- AGGIUNGI QUESTO PER MEMORIZZARE CHE SEI NEL RIEPILOGO ALLENAMENTO
+        localStorage.setItem('LiftMetrics_summary_logs', JSON.stringify(currentSessionLogsTemp));
+        localStorage.setItem('LiftMetrics_summary_duration', currentDurationMinutesTemp);
         localStorage.setItem('LiftMetrics_sub_view', 'workout_summary');
+        localStorage.setItem('LiftMetrics_current_tab', '0');
 
         workoutState.active = false;
         localStorage.removeItem('LiftMetrics_active_session');
+
+        // NASCONDI COMPLETAMENTE LA SCHEDA E MOSTRA SOLO IL RIEPILOGO
+        document.getElementById('start-session-view').classList.add('hidden');
+        document.getElementById('active-workout-view').classList.add('hidden');
+        document.getElementById('workout-summary-view').classList.remove('hidden');
+        
+        // Nasconde la barra di navigazione principale durante il riepilogo per evitare sovrapposizioni
+        document.getElementById('main-nav-tabs').style.display = 'none';
+
+        refreshSummaryDisplay();
     }
 
     function refreshSummaryDisplay() {
@@ -3129,7 +3228,7 @@
         refreshSummaryDisplay();
     }
 
-    function closeSummaryAndReturnHome() {
+   function closeSummaryAndReturnHome() {
         if (currentSessionLogsTemp.length > 0) {
             const now = new Date();
             const dateStr = now.toLocaleDateString('it-IT', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -3144,8 +3243,13 @@
 
         document.getElementById('workout-summary-view').classList.add('hidden');
         document.getElementById('start-session-view').classList.remove('hidden');
+        
+        // Riattiva la visualizzazione della barra di navigazione principale
         document.getElementById('main-nav-tabs').style.display = 'grid';
+        
         localStorage.removeItem('LiftMetrics_sub_view');
+        localStorage.removeItem('LiftMetrics_summary_logs');
+        localStorage.removeItem('LiftMetrics_summary_duration');
 
         workoutState = { active: false, isRest: false, isPaused: false, seconds: 0, interval: null, startTime: null, currentSetStartTime: null, completedSets: {}, lockedSets: {}, savedRestSeconds: null };
         activeBlockIdx = 0;
@@ -3394,37 +3498,8 @@
         }
     }
 
-    function updateEditableExerciseSetsCount(bIdx, exIdx, val) {
-        const ex = routines[currentRoutineKey][bIdx].exercises[exIdx];
-        const newSets = parseInt(val) || 1;
-        ex.sets = newSets;
-        
-        if (Array.isArray(ex.reps)) {
-            const currentVals = ex.reps;
-            ex.reps = Array(newSets).fill(0).map((_, i) => currentVals[i] !== undefined ? currentVals[i] : (currentVals[currentVals.length - 1] || 8));
-        } else {
-            ex.reps = parseInt(ex.reps) || 8;
-        }
-
-        if (Array.isArray(ex.weight)) {
-            const currentWeights = ex.weight;
-            ex.weight = Array(newSets).fill(0).map((_, i) => currentWeights[i] !== undefined ? currentWeights[i] : (currentWeights[currentWeights.length - 1] || 0));
-        }
-
-        saveRoutinesStorage();
-        renderEditRoutine();
-    }
-
-    function updateEditableExerciseArray(bIdx, exIdx, setIdx, val) {
-        const ex = routines[currentRoutineKey][bIdx].exercises[exIdx];
-        if (Array.isArray(ex.reps)) {
-            ex.reps[setIdx] = parseInt(val) || 0;
-            saveRoutinesStorage();
-        }
-    }
-
     function updateEditableExercise(bIdx, exIdx, field, val) {
-        const ex = routines[currentRoutineKey][bIdx].exercises[exIdx];
+        const ex = routines[currentRoutineKey].exercises[exIdx];
         if (field === 'name') {
             ex.name = val.trim();
         } else if (field === 'sets') {
@@ -3437,6 +3512,16 @@
             ex.restSet = parseInt(val) || 0;
         }
         saveRoutinesStorage();
+        // Mantiene traccia in tempo reale della schermata di modifica
+        localStorage.setItem('LiftMetrics_sub_view', 'routine_edit');
+    }
+
+    function updateEditableExerciseArray(bIdx, exIdx, setIdx, val) {
+        const ex = routines[currentRoutineKey][bIdx].exercises[exIdx];
+        if (Array.isArray(ex.reps)) {
+            ex.reps[setIdx] = parseInt(val) || 0;
+            saveRoutinesStorage();
+        }
     }
 
     function updateBlockRest(bIdx, val) {
@@ -3564,8 +3649,8 @@
 
             let exercisesHtml = '';
             if (singleExercises.length > 0) {
-                exercisesHtml += `<div class="history-exercise-group">
-                    <strong>FORZA • ESERCIZI</strong>
+                exercisesHtml += `<div class="history-exercise-group" style="margin-bottom: 10px;">
+                    <strong style="font-size: 10px; font-weight: 800; color: #78839a; text-transform: uppercase; letter-spacing: 0.65px; display: block; margin-bottom: 6px;">FORZA • ESERCIZI</strong>
                     ${singleExercises.map(l => `<div class="history-exercise-row"><span>${l.name}</span><span>${l.setsData.map(sd => {
                         const w = Number(sd.weight) || 0;
                         return w > 0 ? `${w}kg × ${sd.reps}` : `${sd.reps} rep`;
@@ -3574,13 +3659,26 @@
             }
 
             if (supersetExercises.length > 0) {
-                exercisesHtml += `<div class="history-exercise-group history-superset-group">
-                    <strong style="color:#c99bff;">SUPERSET</strong>
-                    ${supersetExercises.map(l => `<div class="history-exercise-row"><span>${l.name}</span><span>${l.setsData.map(sd => {
-                        const w = Number(sd.weight) || 0;
-                        return w > 0 ? `${w}kg × ${sd.reps}` : `${sd.reps} rep`;
-                    }).join('  ·  ')}</span></div>`).join('')}
-                </div>`;
+                const supersetRowsHtml = supersetExercises.map(l => `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid rgba(155,114,255,0.1);">
+                        <span style="font-weight: 700; color: #ffffff; font-size: 12px;">${l.name}</span>
+                        <span style="color: var(--subtext); font-size: 11px; font-weight: 600;">${l.setsData.map(sd => {
+                            const w = Number(sd.weight) || 0;
+                            return w > 0 ? `${w}kg × ${sd.reps}` : `${sd.reps} rep`;
+                        }).join('  ·  ')}</span>
+                    </div>
+                `).join('');
+
+                exercisesHtml += `
+                    <div style="background: linear-gradient(145deg, rgba(20,16,35,0.6), rgba(12,10,22,0.8)); border: 1px solid rgba(155,114,255,0.35); border-radius: 14px; padding: 12px 14px; margin-top: 10px; box-shadow: 0 8px 20px rgba(124,92,255,0.1); backdrop-filter: blur(12px);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px dashed rgba(155,114,255,0.2);">
+                            <span style="font-size: 10px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase; color: #c084fc; background: rgba(155,114,255,0.15); padding: 2px 8px; border-radius: 99px; border: 1px solid rgba(155,114,255,0.3);">Superset</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 2px;">
+                            ${supersetRowsHtml}
+                        </div>
+                    </div>
+                `;
             }
 
             container.innerHTML += `
@@ -3623,7 +3721,12 @@
         Object.values(routines).forEach(blocks => blocks.forEach(b => b.exercises.forEach(e => exNames.add(e.name))));
 
         const exList = Array.from(exNames);
-        if ((!selectedChartExercise || !exNames.has(selectedChartExercise)) && exList.length > 0) {
+        
+        // Recupera l'esercizio salvato in precedenza dal localStorage se valido
+        const savedChartEx = localStorage.getItem('LiftMetrics_chart_exercise');
+        if (savedChartEx && exNames.has(savedChartEx)) {
+            selectedChartExercise = savedChartEx;
+        } else if ((!selectedChartExercise || !exNames.has(selectedChartExercise)) && exList.length > 0) {
             selectedChartExercise = exList[0];
         }
 
@@ -3632,7 +3735,11 @@
             { value: 'maxrep', label: 'Miglioramento complessivo (Best Set)' }
         ];
 
-        if (!selectedChartType) {
+        // Recupera la metrica salvata in precedenza dal localStorage se valida
+        const savedChartType = localStorage.getItem('LiftMetrics_chart_type');
+        if (savedChartType && metricOptions.some(m => m.value === savedChartType)) {
+            selectedChartType = savedChartType;
+        } else if (!selectedChartType) {
             selectedChartType = 'score';
         }
 
@@ -3642,6 +3749,7 @@
             selectedChartExercise, 
             (val) => {
                 selectedChartExercise = val;
+                localStorage.setItem('LiftMetrics_chart_exercise', val); // <-- Salvataggio persistente esercizio
                 renderChart();
             },
             deleteExerciseFromAnalytics,
@@ -3654,6 +3762,7 @@
             selectedChartType, 
             (val) => {
                 selectedChartType = val;
+                localStorage.setItem('LiftMetrics_chart_type', val); // <-- Salvataggio persistente metrica
                 renderChart();
             },
             null,
