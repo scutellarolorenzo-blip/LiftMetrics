@@ -3523,6 +3523,37 @@
         localStorage.setItem('LiftMetrics_sub_view', 'routine_edit');
     }
 
+    function updateEditableExerciseSetsCount(bIdx, exIdx, val) {
+        const newSets = parseInt(val) || 1;
+        const ex = routines[currentRoutineKey][bIdx].exercises[exIdx];
+        ex.sets = newSets;
+
+        // Se le rep erano un array (personalizzate), adeguiamo la lunghezza dell'array al nuovo numero di serie
+        if (Array.isArray(ex.reps)) {
+            const currentLen = ex.reps.length;
+            if (newSets > currentLen) {
+                const lastVal = ex.reps[currentLen - 1] || 8;
+                for (let i = currentLen; i < newSets; i++) ex.reps.push(lastVal);
+            } else {
+                ex.reps = ex.reps.slice(0, newSets);
+            }
+        }
+
+        // Idem per il peso se personalizzato per serie
+        if (Array.isArray(ex.weight)) {
+            const currentLenW = ex.weight.length;
+            if (newSets > currentLenW) {
+                const lastValW = ex.weight[currentLenW - 1] || 0;
+                for (let i = currentLenW; i < newSets; i++) ex.weight.push(lastValW);
+            } else {
+                ex.weight = ex.weight.slice(0, newSets);
+            }
+        }
+
+        saveRoutinesStorage();
+        renderEditRoutine(); // Aggiorna l'interfaccia mostrando i nuovi input per ciascuna serie
+    }
+
     function updateEditableExerciseArray(bIdx, exIdx, setIdx, val) {
         const ex = routines[currentRoutineKey][bIdx].exercises[exIdx];
         if (Array.isArray(ex.reps)) {
