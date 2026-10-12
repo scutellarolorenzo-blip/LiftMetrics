@@ -192,8 +192,17 @@
     .tab-btn.active .tab-icon { opacity: 1; filter: drop-shadow(0 0 7px rgba(109,140,255,.35)); }
     .tab-label { display: block; font-size: 10px; line-height: 1; }
 
-    .tab-content { display: none; opacity: 0; transform: translateY(7px); }
-    .tab-content.active { display: block; opacity: 1; transform: none; animation: pageIn .28s ease both; }
+    .tab-content { 
+        display: none; 
+        opacity: 0; 
+        transform: translateY(4px); 
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .tab-content.active { 
+        display: block; 
+        opacity: 1; 
+        transform: none; 
+    }
     @keyframes pageIn { from { opacity: 0; transform: translateY(8px) scale(.992); } to { opacity: 1; transform: none; } }
 
     .card, .block-card, .edit-block-item, .history-item, .analytics-session-card, .set-group-card {
@@ -1167,13 +1176,20 @@
     const swipeContainer = document.getElementById('swipe-container');
 
     swipeContainer.addEventListener('touchstart', e => {
-        if (workoutState.active) return;
+        // Blocca lo swipe se c'è un workout attivo o se siamo nella schermata di riepilogo
+        const summaryView = document.getElementById('workout-summary-view');
+        const isSummaryActive = summaryView && !summaryView.classList.contains('hidden');
+        if (workoutState.active || isSummaryActive) return;
+        
         touchStartX = e.changedTouches[0].screenX;
         touchStartY = e.changedTouches[0].screenY;
     }, {passive: true});
 
     swipeContainer.addEventListener('touchend', e => {
-        if (workoutState.active) return;
+        const summaryView = document.getElementById('workout-summary-view');
+        const isSummaryActive = summaryView && !summaryView.classList.contains('hidden');
+        if (workoutState.active || isSummaryActive) return;
+
         const touchEndX = e.changedTouches[0].screenX;
         const touchEndY = e.changedTouches[0].screenY;
         const diffX = touchEndX - touchStartX;
@@ -1182,11 +1198,11 @@
         if (Math.abs(diffX) > Math.abs(diffY) * 1.5 && Math.abs(diffX) > 80) {
             if (diffX < 0) {
                 if (currentTabIndex < tabIds.length - 1) {
-                    switchTab(currentTabIndex + 1, document.querySelectorAll('.tab-btn')[currentTabIndex + 1]);
+                    switchTab(currentTabIndex + 1);
                 }
             } else {
                 if (currentTabIndex > 0) {
-                    switchTab(currentTabIndex - 1, document.querySelectorAll('.tab-btn')[currentTabIndex - 1]);
+                    switchTab(currentTabIndex - 1);
                 }
             }
         }
