@@ -1873,35 +1873,30 @@
         }
     }
 
-    function playBeep() {
+    function playBeep(freq = 1500, duration = 0.25, volume = 1.0) {
         try {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
             
-            // Sequenza di 3 beep rapidi e ad alto volume per massima udibilità
-            const now = audioCtx.currentTime;
-            [0, 0.15, 0.3].forEach((delay, index) => {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                
-                // Frequenza molto acuta (1500 Hz) per tagliare i rumori e la musica
-                osc.type = 'sine'; 
-                osc.frequency.setValueAtTime(1500, now + delay);
-                
-                // Guadagno portato al massimo (1.0)
-                gain.gain.setValueAtTime(1.0, now + delay);
-                gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
-                
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-                
-                osc.start(now + delay);
-                osc.stop(now + delay + 0.12);
-            });
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            
+            osc.type = 'sine'; 
+            osc.frequency.value = freq;
+            
+            // Volume massimo forzato per superare qualsiasi rumore o musica
+            gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+            
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
 
-            // Attiva anche la vibrazione del telefono se supportata (utile se il telefono è vicino o in tasca)
+            // Attiva la vibrazione del telefono
             if (navigator.vibrate) {
-                navigator.vibrate([200, 100, 200, 100, 400]);
+                navigator.vibrate(Math.min(duration * 1000, 500));
             }
         } catch (e) {
             console.log("Audio non supportato", e);
@@ -2975,10 +2970,14 @@
 
         workoutState.interval = setInterval(() => {
             if (!workoutState.isPaused) {
-                if (workoutState.seconds === 5  || workoutState.seconds === 3  || workoutState.seconds === 2) {
-                    playBeep(1200, 'sine', 0.15); // Beep di pre-avviso
+                if (workoutState.seconds === 5) {
+                    playBeep(1600, 1.5, 1.0); // 5° secondo: Beep acuto per 1.5 secondi
+                } else if (workoutState.seconds === 3) {
+                    playBeep(1600, 1.5, 1.0); // 3° secondo: Beep acuto per 1.5 secondi
+                } else if (workoutState.seconds === 1) {
+                    playBeep(1800, 1.0, 1.0); // 1° secondo: Beep di 1 secondo pieno
                 } else if (workoutState.seconds === 0) {
-                    playBeep(); // Triplo beep forte finale
+                    playBeep(2200, 0.8, 1.0); // Allo scadere: Beep altissimo, fortissimo e penetrante
                 }
 
                 workoutState.seconds--;
