@@ -1873,24 +1873,36 @@
         }
     }
 
-   function playBeep(freq = 1200, type = 'sine', duration = 0.25) {
+    function playBeep() {
         try {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             if (audioCtx.state === 'suspended') audioCtx.resume();
             
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = type; 
-            osc.frequency.value = freq;
-            
-            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
-            
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            
-            osc.start();
-            osc.stop(audioCtx.currentTime + duration);
+            // Sequenza di 3 beep rapidi e ad alto volume per massima udibilità
+            const now = audioCtx.currentTime;
+            [0, 0.15, 0.3].forEach((delay, index) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                
+                // Frequenza molto acuta (1500 Hz) per tagliare i rumori e la musica
+                osc.type = 'sine'; 
+                osc.frequency.setValueAtTime(1500, now + delay);
+                
+                // Guadagno portato al massimo (1.0)
+                gain.gain.setValueAtTime(1.0, now + delay);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
+                
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                
+                osc.start(now + delay);
+                osc.stop(now + delay + 0.12);
+            });
+
+            // Attiva anche la vibrazione del telefono se supportata (utile se il telefono è vicino o in tasca)
+            if (navigator.vibrate) {
+                navigator.vibrate([200, 100, 200, 100, 400]);
+            }
         } catch (e) {
             console.log("Audio non supportato", e);
         }
@@ -2963,15 +2975,15 @@
 
         workoutState.interval = setInterval(() => {
             if (!workoutState.isPaused) {
-                if (workoutState.seconds === 5 || workoutState.seconds === 3 || workoutState.seconds === 2) {
-                    playBeep(880, 'sine', 0.15);
-                } else if (workoutState.seconds === 1) {
-                    playBeep(1200, 'sine', 1.0);
+                if (workoutState.seconds === 5  || workoutState.seconds === 3  || workoutState.seconds === 2) {
+                    playBeep(1200, 'sine', 0.15); // Beep di pre-avviso
+                } else if (workoutState.seconds === 0) {
+                    playBeep(); // Triplo beep forte finale
                 }
 
                 workoutState.seconds--;
                 updateTimerDisplay();
-                updateLiftMetricsWorkoutHud();
+                updateLiftMetricsWorkoutHud();  
 
                 if (workoutState.seconds <= 0) {
                     finishRest();
