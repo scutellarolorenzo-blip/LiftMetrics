@@ -2960,7 +2960,7 @@
         saveActiveWorkoutSession();
     }
 
-    function startRestTimer(duration) {
+   function startRestTimer(duration) {
         if (workoutState.interval) clearInterval(workoutState.interval);
         workoutState.isRest = true;
         workoutState.seconds = duration;
@@ -2970,21 +2970,22 @@
 
         workoutState.interval = setInterval(() => {
             if (!workoutState.isPaused) {
-                if (workoutState.seconds === 5) {
-                    playBeep(1600, 1.5, 1.0); // 5° secondo: Beep acuto per 1.5 secondi
-                } else if (workoutState.seconds === 3) {
-                    playBeep(1600, 1.5, 1.0); // 3° secondo: Beep acuto per 1.5 secondi
-                } else if (workoutState.seconds === 1) {
-                    playBeep(1800, 1.0, 1.0); // 1° secondo: Beep di 1 secondo pieno
+                // Esegue i controlli esatti sui secondi rimanenti
+                if (workoutState.seconds === 6) {
+                    playBeep(1500, 1.5, 1.0); // 6° secondo: Beep standard acuto per 1.5 secondi
+                } else if (workoutState.seconds === 4) {
+                    playBeep(1500, 1.5, 1.0); // 4° secondo: Beep identico per 1.5 secondi
+                } else if (workoutState.seconds === 2) {
+                    playBeep(1500, 1.5, 1.0); // 2° secondo: Beep identico per 1.5 secondi
                 } else if (workoutState.seconds === 0) {
-                    playBeep(2200, 0.8, 1.0); // Allo scadere: Beep altissimo, fortissimo e penetrante
+                    playBeep(2400, 1.0, 1.0); // 0 secondi: Beep finale molto più acuto, forte e della durata di 1 secondo
                 }
 
                 workoutState.seconds--;
                 updateTimerDisplay();
                 updateLiftMetricsWorkoutHud();  
 
-                if (workoutState.seconds <= 0) {
+                if (workoutState.seconds < 0) {
                     finishRest();
                 } else {
                     saveActiveWorkoutSession();
@@ -3273,7 +3274,7 @@
         initActiveRoutineSelect();
     }
 
-    function renderEditRoutine() {
+   function renderEditRoutine() {
         if (!routines[currentRoutineKey]) currentRoutineKey = Object.keys(routines)[0];
         const blocks = routines[currentRoutineKey];
         const container = document.getElementById('edit-routine-list');
@@ -3395,7 +3396,7 @@
                         <div style="display:flex; justify-content:flex-end; align-items:center; margin-top:8px;">
                             <div style="display:flex; align-items:center; gap:6px;">
                                 <span class="field-label" style="margin-bottom:0;">Rec. Serie (sec):</span>
-                                <input type="number" value="${ex.restSet || 30}" onchange="updateEditableExercise(${bIdx}, ${exIdx}, 'restSet', this.value)" style="width:65px; text-align:center; margin-bottom:0 !important;">
+                                <input type="number" value="${ex.restSet || 90}" onchange="updateEditableExercise(${bIdx}, ${exIdx}, 'restSet', this.value)" style="width:65px; text-align:center; margin-bottom:0 !important;">
                             </div>
                         </div>
                     </div>
@@ -3471,7 +3472,6 @@
             });
 
             const isLastBlock = (bIdx === blocks.length - 1);
-
             const isSuperEdit = block.isSuperset;
             const editBorderColor = isSuperEdit ? 'rgba(155,114,255,0.45)' : 'rgba(109,140,255,0.3)';
             const editShadowColor = isSuperEdit ? 'rgba(124,92,255,0.22)' : 'rgba(109,140,255,0.12)';
@@ -3479,7 +3479,6 @@
                 ? 'linear-gradient(110deg, #ffffff 40%, #c084fc 100%)' 
                 : 'linear-gradient(110deg, #ffffff 40%, var(--if-blue) 100%)';
             
-            // Definiamo correttamente il badge per la schermata di modifica
             const supersetBadge = isSuperEdit 
                 ? '<span style="font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 99px; background: rgba(155,114,255,0.15); color: #c084fc; border: 1px solid rgba(155,114,255,0.45);">Superset</span>' 
                 : '';
@@ -3516,8 +3515,8 @@
         }
     }
 
-    function updateEditableExercise(bIdx, exIdx, field, val) {
-        const ex = routines[currentRoutineKey].exercises[exIdx];
+   function updateEditableExercise(bIdx, exIdx, field, val) {
+        const ex = routines[currentRoutineKey][bIdx].exercises[exIdx];
         if (field === 'name') {
             ex.name = val.trim();
         } else if (field === 'sets') {
@@ -3527,10 +3526,9 @@
         } else if (field === 'weight') {
             ex.weight = parseFloat(val) || 0;
         } else if (field === 'restSet') {
-            ex.restSet = parseInt(val) || 0;
+            ex.restSet = parseInt(val) || 30;
         }
         saveRoutinesStorage();
-        // Mantiene traccia in tempo reale della schermata di modifica
         localStorage.setItem('LiftMetrics_sub_view', 'routine_edit');
     }
 
