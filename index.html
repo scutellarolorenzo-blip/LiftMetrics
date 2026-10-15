@@ -422,11 +422,11 @@
     .custom-select-options {
         display: none; 
         position: absolute;
-        top: calc(100% + 4px);
-        left: 0;
-        right: 0;
-        min-width: 100%;
-        max-height: 220px;
+        top: calc(100% + 6px);
+        left: 0; /* Allineato a sinistra o centrato a seconda delle preferenze */
+        min-width: 100%; /* Si estende almeno quanto il trigger, ma cresce se il testo è lungo */
+        width: max-content; /* Si adatta perfettamente alla riga più lunga senza troncare */
+        max-height: 240px;
         overflow-y: auto;
         background: linear-gradient(145deg, rgba(15, 18, 27, 0.99), rgba(8, 11, 17, 0.99)) !important;
         border: 1px solid var(--if-line-strong) !important;
@@ -457,14 +457,16 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        white-space: normal !important;
-        word-break: break-word !important;
+        gap: 16px;
+        white-space: nowrap !important; /* Forza il testo rigorosamente su una sola riga orizzontale */
+        width: 100%;
     }
 
     .custom-option span:first-child {
-        white-space: normal !important;
-        word-break: break-word !important;
-        overflow-wrap: break-word !important;
+        white-space: nowrap !important; /* Impedisce al testo interno di andare a capo */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
     }
 
     .custom-option:hover {
@@ -1200,7 +1202,7 @@
         }
     }, {passive: true});
 
-    function renderCustomDropdown(wrapperId, optionsList, currentVal, onSelectCallback, onDeleteCallback = null, defaultText = 'Seleziona') {
+   function renderCustomDropdown(wrapperId, optionsList, currentVal, onSelectCallback, onDeleteCallback = null, defaultText = 'Seleziona') {
         const wrapper = document.getElementById(wrapperId);
         if (!wrapper) return;
 
@@ -1230,16 +1232,10 @@
             const optionEl = document.createElement('div');
             optionEl.className = `custom-option ${isSelected ? 'selected' : ''}`;
 
-            let deleteBtnHTML = '';
-            if (onDeleteCallback) {
-                deleteBtnHTML = `<span class="custom-option-delete" title="Elimina esercizio">✕</span>`;
-            }
-
-            optionEl.innerHTML = `
-                <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${label}</span>
-                <span class="opt-check">${isSelected ? '✓' : ''}</span>
-                ${deleteBtnHTML}
-            `;
+            // Inserisce il testo dell'opzione e l'eventuale pulsante di eliminazione
+            let deleteBtnHTML = onDeleteCallback ? `<span class="custom-option-delete" title="Elimina">✕</span>` : '';
+            
+            optionEl.innerHTML = `<span>${label}</span>${deleteBtnHTML}`;
 
             if (onDeleteCallback) {
                 const delBtn = optionEl.querySelector('.custom-option-delete');
@@ -1249,8 +1245,8 @@
                         wrapper.classList.remove('open');
 
                         const confirmDel = await customConfirm(
-                            `Sei sicuro di voler rimuovere l'esercizio "${label}" dall'elenco dell'analisi?`,
-                            "Elimina Esercizio"
+                            `Sei sicuro di voler rimuovere "${label}"?`,
+                            "Elimina Elemento"
                         );
 
                         if (confirmDel) {
@@ -1266,13 +1262,9 @@
 
                 optionsContainer.querySelectorAll('.custom-option').forEach(el => {
                     el.classList.remove('selected');
-                    const checkSpan = el.querySelector('.opt-check');
-                    if (checkSpan) checkSpan.textContent = '';
                 });
 
                 optionEl.classList.add('selected');
-                const myCheck = optionEl.querySelector('.opt-check');
-                if (myCheck) myCheck.textContent = '✓';
 
                 if (triggerSpan) {
                     triggerSpan.textContent = label;
@@ -1546,64 +1538,135 @@
         document.getElementById('confirm-new-password').value = '';
     }
  
-   function showMainApp() {
+    
+    
+    async function showMainApp() {
+        if (!currentUser) {
+            showAuthScreen();
+            return;
+        }
+
+        // Memorizza l'utente per il quale stiamo caricando i dati.
+        const loadingUserId = currentUser.id;
+
+        // Mantieni nascosta l'app finché i dati cloud non sono caricati.
+        document.getElementById('auth-container').classList.remove('hidden');
+        document.getElementById('main-app-container').classList.add('hidden');
+        document.getElementById('logout-btn').classList.add('hidden');
+
+        // Inizializzazione temporanea: non usare dati locali condivisi.
+        routines = JSON.parse(JSON.stringify(defaultRoutines));
+        currentRoutineKey = Object.keys(routines)[0];
+        historyData = [];
+        savedStatusMap = {};
+
+        // Carica i dati esclusivamente dall'account autenticato.
+        try {
+            await fetchRemoteData();
+
+            // Impedisci di mostrare dati se nel frattempo è cambiato utente.
+            if (!currentUser || currentUser.id !== loadingUserId) {
+                return;
+            }
+        } catch (error) {
+            console.error("Errore durante il caricamento dell'account:", error);
+
+            document.getElementById('main-app-container').classList.add('hidden');
+            document.getElementById('logout-btn').classList.add('hidden');
+
+            showAuthScreen();
+
+            await customAlert(
+                error.message ||
+                "Impossibile caricare i tuoi dati. Riprova."
+            );
+
+            return;
+        }
+
+        // Mostra l'app soltanto dopo il caricamento riuscito.
         document.getElementById('auth-container').classList.add('hidden');
         document.getElementById('main-app-container').classList.remove('hidden');
         document.getElementById('logout-btn').classList.remove('hidden');
-        
-        const savedRoutines = localStorage.getItem('LiftMetrics_routines');
-        if (savedRoutines) {
-            try { routines = JSON.parse(savedRoutines); } catch(e){}
-        } else {
-            routines = JSON.parse(JSON.stringify(defaultRoutines));
+
+        // La sessione attiva locale non deve passare da un account all'altro.
+        const sessionOwner = localStorage.getItem(
+            'LiftMetrics_active_session_owner'
+        );
+
+        if (sessionOwner !== loadingUserId) {
+            localStorage.removeItem('LiftMetrics_active_session');
+            localStorage.removeItem('LiftMetrics_summary_logs');
+            localStorage.removeItem('LiftMetrics_summary_duration');
+            localStorage.removeItem('LiftMetrics_sub_view');
+
+            currentSessionLogsTemp = [];
+            currentDurationMinutesTemp = 0;
         }
 
-        const savedKey = localStorage.getItem('LiftMetrics_current_key');
-        if (savedKey && routines[savedKey]) {
-            currentRoutineKey = savedKey;
-        } else {
-            currentRoutineKey = Object.keys(routines)[0];
-        }
-
-        historyData = JSON.parse(localStorage.getItem('LiftMetrics_history') || '[]');
-        savedStatusMap = JSON.parse(localStorage.getItem('LiftMetrics_saved_status') || '{}');
+        localStorage.setItem(
+            'LiftMetrics_active_session_owner',
+            loadingUserId
+        );
 
         const hasActiveSession = loadActiveWorkoutSession();
 
-       const savedTab = localStorage.getItem('LiftMetrics_current_tab');
-        const targetTab = savedTab !== null ? parseInt(savedTab) : 0;
+        const savedTab = localStorage.getItem('LiftMetrics_current_tab');
+        let targetTab = savedTab !== null ? parseInt(savedTab, 10) : 0;
+
+        // Se il valore salvato non è valido, torna alla prima scheda.
+        if (!Number.isInteger(targetTab) || targetTab < 0 || targetTab >= tabIds.length) {
+            targetTab = 0;
+        }
+
         const savedSubView = localStorage.getItem('LiftMetrics_sub_view');
 
-        // Recupero dei log temporanei del riepilogo se presenti nel localStorage
         if (savedSubView === 'workout_summary') {
             const savedLogs = localStorage.getItem('LiftMetrics_summary_logs');
             const savedDuration = localStorage.getItem('LiftMetrics_summary_duration');
+
             if (savedLogs) {
-                try { currentSessionLogsTemp = JSON.parse(savedLogs); } catch(e){}
+                try {
+                    currentSessionLogsTemp = JSON.parse(savedLogs);
+                } catch (e) {
+                    currentSessionLogsTemp = [];
+                }
             }
+
             if (savedDuration) {
-                currentDurationMinutesTemp = parseInt(savedDuration) || 1;
+                currentDurationMinutesTemp = parseInt(savedDuration, 10) || 1;
             }
         }
 
         currentTabIndex = targetTab;
-        
+
         const buttons = document.querySelectorAll('.tab-btn');
-        buttons.forEach((b, idx) => {
-            if (idx === targetTab) b.classList.add('active');
-            else b.classList.remove('active');
+
+        buttons.forEach((button, index) => {
+            if (index === targetTab) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
         });
 
-        tabIds.forEach((id, idx) => {
+        tabIds.forEach((id, index) => {
             const content = document.getElementById(id);
-            if (idx === targetTab) content.classList.add('active');
-            else content.classList.remove('active');
+
+            if (content) {
+                if (index === targetTab) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            }
         });
 
         if (hasActiveSession) {
             document.getElementById('start-session-view').classList.add('hidden');
             document.getElementById('active-workout-view').classList.remove('hidden');
             document.getElementById('workout-summary-view').classList.add('hidden');
+
             renderWorkout();
             updateTimerDisplay();
 
@@ -1612,54 +1675,52 @@
             } else {
                 startWorkTimer(true);
             }
-        } else {
-            // CONTROLLO PERSISTENTE PER IL RIEPILOGO POST-ALLENAMENTO
-            if (targetTab === 0 && savedSubView === 'workout_summary' && currentSessionLogsTemp.length > 0) {
-                document.getElementById('start-session-view').classList.add('hidden');
-                document.getElementById('active-workout-view').classList.add('hidden');
-                document.getElementById('workout-summary-view').classList.remove('hidden');
-                document.getElementById('main-nav-tabs').style.display = 'none';
-                refreshSummaryDisplay();
-                return; // Impedisce il reset alla home page
-            } else if (targetTab === 0) {
-                document.getElementById('start-session-view').classList.remove('hidden');
-                document.getElementById('active-workout-view').classList.add('hidden');
-                document.getElementById('workout-summary-view').classList.add('hidden');
-                document.getElementById('main-nav-tabs').style.display = 'grid';
-            } else if (targetTab === 1) {
-                initRoutineSelectors();
-                if (savedSubView === 'routine_edit') {
-                    enableEditMode();
-                } else {
-                    showSummaryView();
-                }
+
+            return;
+        }
+
+        if (
+            targetTab === 0 &&
+            savedSubView === 'workout_summary' &&
+            currentSessionLogsTemp.length > 0
+        ) {
+            document.getElementById('start-session-view').classList.add('hidden');
+            document.getElementById('active-workout-view').classList.add('hidden');
+            document.getElementById('workout-summary-view').classList.remove('hidden');
+            document.getElementById('main-nav-tabs').style.display = 'none';
+
+            refreshSummaryDisplay();
+            return;
+        }
+
+        if (targetTab === 0) {
+            document.getElementById('start-session-view').classList.remove('hidden');
+            document.getElementById('active-workout-view').classList.add('hidden');
+            document.getElementById('workout-summary-view').classList.add('hidden');
+            document.getElementById('main-nav-tabs').style.display = 'grid';
+        } else if (targetTab === 1) {
+            initRoutineSelectors();
+
+            if (savedSubView === 'routine_edit') {
+                enableEditMode();
             } else {
-                if (targetTab === 3) renderHistory();
-                if (targetTab === 2) initChartSelect();
+                showSummaryView();
+            }
+        } else {
+            if (targetTab === 3) {
+                renderHistory();
             }
 
-            initActiveRoutineSelect();
-            updateLiftMetricsDashboard();
+            if (targetTab === 2) {
+                initChartSelect();
+            }
         }
 
-        // Sincronizzazione remota in background standard per tutte le altre schermate
-        if (navigator.onLine && currentUser) {
-            db.from('LiftMetrics_data').select('*').eq('id', currentUser.id).single().then(({ data }) => {
-                if (data && data.routines && !workoutState.active) {
-                    routines = data.routines;
-                    historyData = data.history || [];
-                    savedStatusMap = data.saved_status || {};
-                    saveRoutinesStorage();
-                    if (targetTab === 1 && localStorage.getItem('LiftMetrics_sub_view') !== 'routine_edit') {
-                        showSummaryView();
-                    } else if (targetTab === 0) {
-                        initActiveRoutineSelect();
-                        updateLiftMetricsDashboard();
-                    }
-                }
-            });
-        }
+        // Aggiorna i selettori solo dopo aver caricato i dati cloud.
+        initActiveRoutineSelect();
+        updateLiftMetricsDashboard();
     }
+
 
     async function handleForgotPassword() {
         const email = document.getElementById('auth-email').value.trim();
@@ -1779,11 +1840,25 @@
             if (error) console.warn("Logout Supabase non completato:", error.message);
         } catch (e) {
             console.warn("Logout locale eseguito:", e);
-        } finally {
+        } 
+        finally {
             currentUser = null;
+
+            // Non lasciare una sessione di allenamento attiva
+            // utilizzabile dal successivo account sullo stesso dispositivo.
             localStorage.removeItem('LiftMetrics_active_session');
+            localStorage.removeItem('LiftMetrics_active_session_owner');
+            localStorage.removeItem('LiftMetrics_summary_logs');
+            localStorage.removeItem('LiftMetrics_summary_duration');
+            localStorage.removeItem('LiftMetrics_sub_view');
+
+            // Rimuovi anche eventuali dati temporanei del riepilogo.
+            currentSessionLogsTemp = [];
+            currentDurationMinutesTemp = 0;
+
             showAuthScreen();
         }
+
     }
 
     window.addEventListener('online', () => {
@@ -1806,7 +1881,7 @@
         }
     }
 
-   async function syncDataToSupabase() {
+    async function syncDataToSupabase() {
         if (!navigator.onLine || !currentUser) return false;
         try {
             const payload = {
@@ -1828,50 +1903,106 @@
         }
     }
 
-   async function fetchRemoteData() {
-        if (!navigator.onLine || !currentUser) return;
-        try {
-            const { data, error } = await db.from('LiftMetrics_data')
-                .select('*')
-                .eq('id', currentUser.id)
-                .single();
-                
-            if (data && !error && data.routines && Object.keys(data.routines).length > 0) {
-                routines = data.routines;
-                historyData = data.history || [];
-                savedStatusMap = data.saved_status || {};
-            } else {
-                const localRoutines = localStorage.getItem('LiftMetrics_routines');
-                const localHistory = localStorage.getItem('LiftMetrics_history');
-                
-                if (localRoutines) {
-                    routines = JSON.parse(localRoutines);
-                    historyData = localHistory ? JSON.parse(localHistory) : [];
-                    savedStatusMap = JSON.parse(localStorage.getItem('LiftMetrics_saved_status') || '{}');
-                    await syncDataToSupabase();
-                } else {
-                    routines = JSON.parse(JSON.stringify(defaultRoutines));
-                    historyData = [];
-                    savedStatusMap = {};
-                    currentRoutineKey = "Scheda Di Prova";
-                    saveRoutinesStorage();
-                }
-            }
-
-            if (!workoutState.active) {
-                if (!routines[currentRoutineKey]) {
-                    currentRoutineKey = Object.keys(routines)[0];
-                }
-            }
-
-            localStorage.setItem('LiftMetrics_routines', JSON.stringify(routines));
-            localStorage.setItem('LiftMetrics_history', JSON.stringify(historyData));
-            localStorage.setItem('LiftMetrics_saved_status', JSON.stringify(savedStatusMap));
-            localStorage.setItem('LiftMetrics_current_key', currentRoutineKey);
-        } catch (e) {
-            console.log("Nessun dato remoto trovato.");
+   
+    async function fetchRemoteData() {
+        if (!currentUser) {
+            throw new Error("Nessun utente autenticato.");
         }
+
+        if (!navigator.onLine) {
+            throw new Error(
+                "Connessione assente: impossibile verificare i dati cloud. Riprova online."
+            );
+        }
+
+        const userId = currentUser.id;
+
+        const { data, error } = await db
+            .from('LiftMetrics_data')
+            .select('id, routines, history, saved_status')
+            .eq('id', userId)
+            .maybeSingle();
+
+        if (error) {
+            console.error("Errore caricamento Supabase:", error);
+            throw new Error(
+                "Non riesco a caricare i tuoi dati dal cloud. Riprova."
+            );
+        }
+
+        // Se non esiste una riga, questo è un account senza dati cloud.
+        // NON recuperare mai i dati generici del localStorage.
+        if (!data) {
+            routines = JSON.parse(JSON.stringify(defaultRoutines));
+            historyData = [];
+            savedStatusMap = {};
+            currentRoutineKey = Object.keys(routines)[0];
+
+            const { error: insertError } = await db
+                .from('LiftMetrics_data')
+                .insert({
+                    id: userId,
+                    routines,
+                    history: historyData,
+                    saved_status: savedStatusMap,
+                    updated_at: new Date().toISOString()
+                });
+
+            if (insertError) {
+                console.error("Errore inizializzazione account:", insertError);
+                throw new Error(
+                    "Impossibile inizializzare i dati del nuovo account."
+                );
+            }
+        } else {
+            routines = data.routines &&
+                typeof data.routines === 'object' &&
+                !Array.isArray(data.routines) &&
+                Object.keys(data.routines).length > 0
+                    ? data.routines
+                    : JSON.parse(JSON.stringify(defaultRoutines));
+
+            historyData = Array.isArray(data.history)
+                ? data.history
+                : [];
+
+            savedStatusMap = data.saved_status &&
+                typeof data.saved_status === 'object'
+                    ? data.saved_status
+                    : {};
+
+            currentRoutineKey = Object.keys(routines)[0];
+        }
+
+        // Ripristina la scheda selezionata solo da una preferenza locale
+        // successiva al caricamento dei dati del proprietario corrente.
+        const savedKey = localStorage.getItem(
+            'LiftMetrics_current_key_' + userId
+        );
+
+        if (savedKey && routines[savedKey]) {
+            currentRoutineKey = savedKey;
+        }
+
+        // Cache locale separata per account.
+        localStorage.setItem(
+            'LiftMetrics_routines_' + userId,
+            JSON.stringify(routines)
+        );
+        localStorage.setItem(
+            'LiftMetrics_history_' + userId,
+            JSON.stringify(historyData)
+        );
+        localStorage.setItem(
+            'LiftMetrics_saved_status_' + userId,
+            JSON.stringify(savedStatusMap)
+        );
+        localStorage.setItem(
+            'LiftMetrics_current_key_' + userId,
+            currentRoutineKey
+        );
     }
+
 
     function playBeep(freq = 1500, duration = 0.25, volume = 1.0) {
         try {
@@ -1927,7 +2058,7 @@
         document.getElementById('rename-routine-input').value = currentRoutineKey;
     }
 
-   function onRoutineSelected(val) {
+    function onRoutineSelected(val) {
         if (!val) return;
         currentRoutineKey = val;
         localStorage.setItem('LiftMetrics_current_key', currentRoutineKey);
@@ -2089,12 +2220,37 @@
         }
     }
 
+    
     function saveRoutinesStorage() {
-        localStorage.setItem('LiftMetrics_routines', JSON.stringify(routines));
-        localStorage.setItem('LiftMetrics_current_key', currentRoutineKey);
-        localStorage.setItem('LiftMetrics_saved_status', JSON.stringify(savedStatusMap));
-        syncDataToSupabase();
+        if (!currentUser) {
+            console.error("Salvataggio bloccato: nessun utente autenticato.");
+            return;
+        }
+
+        const userId = currentUser.id;
+
+        // Cache separata per il proprietario dei dati.
+        localStorage.setItem(
+            'LiftMetrics_routines_' + userId,
+            JSON.stringify(routines)
+        );
+        localStorage.setItem(
+            'LiftMetrics_history_' + userId,
+            JSON.stringify(historyData)
+        );
+        localStorage.setItem(
+            'LiftMetrics_saved_status_' + userId,
+            JSON.stringify(savedStatusMap)
+        );
+        localStorage.setItem(
+            'LiftMetrics_current_key_' + userId,
+            currentRoutineKey
+        );
+
+        // Mantieni il salvataggio cloud.
+        void syncDataToSupabase();
     }
+
 
     function initSupersetBuilderRows() {
         const container = document.getElementById('superset-dynamic-rows');
@@ -3620,7 +3776,6 @@
                     return `• ${e.name} (${formatDetails})`;
                 }).join('<br>');
                 
-                const tag = block.isSuperset ? `<span style="color:var(--superset-border); font-weight:bold; font-size:11px;">[Superset]</span> ` : '';
                 const isLastBlock = (bIdx === blocks.length - 1);
                 const restInfoHTML = isLastBlock ? '' : `<div style="font-size:11px; color:var(--subtext); margin-top:8px;">Recupero fine blocco: ${block.restAfterBlock || 120}s</div>`;
 
@@ -3657,14 +3812,13 @@
         document.getElementById('summary-mode-view').classList.add('hidden');
         document.getElementById('edit-mode-view').classList.remove('hidden');
 
-        // <-- AGGIUNGI QUESTO PER MEMORIZZARE CHE SEI NELLA MODIFICA SCHEDA
         localStorage.setItem('LiftMetrics_sub_view', 'routine_edit');
 
         selectedInsertionType = '';
         document.getElementById('insertion-single-box').classList.add('hidden');
         document.getElementById('insertion-superset-box').classList.add('hidden');
 
-        initRoutineSelectors(); // <-- AGGIUNTO PER POPOLARE IL MENU IN CIMA
+        initRoutineSelectors();
         renderEditRoutine();
         initSupersetBuilderRows();
         initRepModeSelect();
