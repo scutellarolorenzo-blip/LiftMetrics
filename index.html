@@ -1884,13 +1884,37 @@
     async function syncDataToSupabase() {
         if (!navigator.onLine || !currentUser) return false;
         try {
+            const userId = currentUser.id;
+
+            // Recupera prima i dati presenti sul server per fare un merge sicuro dello storico
+            const { data: remoteData } = await db
+                .from('LiftMetrics_data')
+                .select('history')
+                .eq('id', userId)
+                .maybeSingle();
+
+            let mergedHistory = [...historyData];
+
+            if (remoteData && Array.isArray(remoteData.history)) {
+                const historyMap = new Map();
+                // Unisce lo storico locale e quello remoto basandosi su dataIso o data
+                mergedHistory.forEach(item => historyMap.set(item.dateIso || item.date, item));
+                remoteData.history.forEach(item => historyMap.set(item.dateIso || item.date, item));
+
+                mergedHistory = Array.from(historyMap.values()).sort((a, b) => {
+                    return new Date(b.dateIso || 0) - new Date(a.dateIso || 0);
+                });
+                historyData = mergedHistory;
+            }
+
             const payload = {
-                id: currentUser.id,
+                id: userId,
                 routines: routines,
                 history: historyData,
                 saved_status: savedStatusMap,
-                updated_at: new Date()
+                updated_at: new Date().toISOString()
             };
+
             const { error } = await db.from('LiftMetrics_data').upsert(payload);
             if (error) {
                 console.error("Errore di salvataggio su Supabase:", error.message);
@@ -1904,103 +1928,102 @@
     }
 
    
-    async function fetchRemoteData() {
+   async function fetchRemoteData() {
         if (!currentUser) {
             throw new Error("Nessun utente autenticato.");
         }
 
-        if (!navigator.onLine) {
-            throw new Error(
-                "Connessione assente: impossibile verificare i dati cloud. Riprova online."
-            );
-        }
-
         const userId = currentUser.id;
 
-        const { data, error } = await db
-            .from('LiftMetrics_data')
-            .select('id, routines, history, saved_status')
-            .eq('id', userId)
-            .maybeSingle();
+        // Carica sempre prima i dati salvati localmente per avere una copia di sicurezza immediata
+        const localRoutines = localStorage.getItem('LiftMetrics_routines_' + userId);
+        const localHistory = localStorage.getItem('LiftMetrics_history_' + userId);
+        const localSavedStatus = localStorage.getItem('LiftMetrics_saved_status_' + userId);
+        const localKey = localStorage.getItem('LiftMetrics_current_key_' + userId);
 
-        if (error) {
-            console.error("Errore caricamento Supabase:", error);
-            throw new Error(
-                "Non riesco a caricare i tuoi dati dal cloud. Riprova."
-            );
-        }
-
-        // Se non esiste una riga, questo è un account senza dati cloud.
-        // NON recuperare mai i dati generici del localStorage.
-        if (!data) {
-            routines = JSON.parse(JSON.stringify(defaultRoutines));
-            historyData = [];
-            savedStatusMap = {};
-            currentRoutineKey = Object.keys(routines)[0];
-
-            const { error: insertError } = await db
-                .from('LiftMetrics_data')
-                .insert({
-                    id: userId,
-                    routines,
-                    history: historyData,
-                    saved_status: savedStatusMap,
-                    updated_at: new Date().toISOString()
-                });
-
-            if (insertError) {
-                console.error("Errore inizializzazione account:", insertError);
-                throw new Error(
-                    "Impossibile inizializzare i dati del nuovo account."
-                );
+        if (localRoutines) {
+            try {
+                routines = JSON.parse(localRoutines);
+            } catch (e) {
+                routines = JSON.parse(JSON.stringify(defaultRoutines));
             }
+        }
+        if (localHistory) {
+            try {
+                historyData = JSON.parse(localHistory);
+            } catch (e) {
+                historyData = [];
+            }
+        }
+        if (localSavedStatus) {
+            try {
+                savedStatusMap = JSON.parse(localSavedStatus);
+            } catch (e) {
+                savedStatusMap = {};
+            }
+        }
+        if (localKey && routines[localKey]) {
+            currentRoutineKey = localKey;
         } else {
-            routines = data.routines &&
-                typeof data.routines === 'object' &&
-                !Array.isArray(data.routines) &&
-                Object.keys(data.routines).length > 0
-                    ? data.routines
-                    : JSON.parse(JSON.stringify(defaultRoutines));
-
-            historyData = Array.isArray(data.history)
-                ? data.history
-                : [];
-
-            savedStatusMap = data.saved_status &&
-                typeof data.saved_status === 'object'
-                    ? data.saved_status
-                    : {};
-
             currentRoutineKey = Object.keys(routines)[0];
         }
 
-        // Ripristina la scheda selezionata solo da una preferenza locale
-        // successiva al caricamento dei dati del proprietario corrente.
-        const savedKey = localStorage.getItem(
-            'LiftMetrics_current_key_' + userId
-        );
-
-        if (savedKey && routines[savedKey]) {
-            currentRoutineKey = savedKey;
+        // Se siamo offline, usiamo direttamente i dati locali in sicurezza
+        if (!navigator.onLine) {
+            console.log("Modalità offline: utilizzo dei dati locali in sicurezza.");
+            return;
         }
 
-        // Cache locale separata per account.
-        localStorage.setItem(
-            'LiftMetrics_routines_' + userId,
-            JSON.stringify(routines)
-        );
-        localStorage.setItem(
-            'LiftMetrics_history_' + userId,
-            JSON.stringify(historyData)
-        );
-        localStorage.setItem(
-            'LiftMetrics_saved_status_' + userId,
-            JSON.stringify(savedStatusMap)
-        );
-        localStorage.setItem(
-            'LiftMetrics_current_key_' + userId,
-            currentRoutineKey
-        );
+        // Se siamo online, proviamo a recuperare i dati dal server Supabase
+        try {
+            const { data, error } = await db
+                .from('LiftMetrics_data')
+                .select('id, routines, history, saved_status')
+                .eq('id', userId)
+                .maybeSingle();
+
+            if (error) {
+                console.warn("Impossibile contattare il cloud, mantengo i dati locali:", error.message);
+                return;
+            }
+
+            if (data) {
+                // Controlla se il cloud ha dati validi prima di sovrascrivere quelli locali
+                const cloudHasRoutines = data.routines && typeof data.routines === 'object' && Object.keys(data.routines).length > 0;
+                const cloudHasHistory = Array.isArray(data.history) && data.history.length > 0;
+
+                if (cloudHasRoutines) {
+                    routines = data.routines;
+                }
+                if (cloudHasHistory) {
+                    // Unione intelligente dello storico per evitare perdite: unisce elementi vecchi e nuovi senza duplicati
+                    const historyMap = new Map();
+                    // Aggiunge prima i dati locali
+                    historyData.forEach(item => historyMap.set(item.dateIso || item.date, item));
+                    // Aggiunge i dati del cloud
+                    data.history.forEach(item => historyMap.set(item.dateIso || item.date, item));
+                    
+                    historyData = Array.from(historyMap.values()).sort((a, b) => {
+                        return new Date(b.dateIso || 0) - new Date(a.dateIso || 0);
+                    });
+                }
+
+                if (data.saved_status && typeof data.saved_status === 'object') {
+                    savedStatusMap = { ...savedStatusMap, ...data.saved_status };
+                }
+            } else {
+                // Se sul cloud non esiste ancora una riga per questo utente, la creiamo salvando i dati attuali
+                await syncDataToSupabase();
+            }
+
+            // Aggiorna la cache locale con i dati sincronizzati
+            localStorage.setItem('LiftMetrics_routines_' + userId, JSON.stringify(routines));
+            localStorage.setItem('LiftMetrics_history_' + userId, JSON.stringify(historyData));
+            localStorage.setItem('LiftMetrics_saved_status_' + userId, JSON.stringify(savedStatusMap));
+
+        } catch (e) {
+            console.warn("Errore di rete durante il fetch remoto, uso i dati locali.", e);
+        }
     }
 
 

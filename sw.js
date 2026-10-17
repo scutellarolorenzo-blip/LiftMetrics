@@ -1,4 +1,4 @@
-const CACHE_NAME = 'liftmetrics-v1';
+const CACHE_NAME = 'liftmetrics-v1.0.0';
 const ASSETS_TO_CACHE = [
   './index.html',
   './manifest.json',
