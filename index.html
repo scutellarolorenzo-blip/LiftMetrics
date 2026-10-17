@@ -344,7 +344,8 @@
 
     .custom-select-wrapper {
         position: relative;
-        width: 100%;
+        user-select: none;
+        z-index: 10;
     }
 
     .custom-select-wrapper.open {
@@ -371,24 +372,22 @@
     }
 
     .custom-select-trigger {
-        width: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        box-sizing: border-box;
-        padding: 12px 16px;
-        background: rgba(20, 24, 38, 0.7);
-        border: 1px solid var(--if-line-strong, rgba(255, 255, 255, 0.1));
-        border-radius: 14px;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 6px !important;
+        background: linear-gradient(135deg, rgba(109, 140, 255, 0.18), rgba(154, 124, 255, 0.12)) !important;
+        border: 1px solid rgba(109, 140, 255, 0.35) !important;
+        color: var(--if-blue) !important;
+        font-size: 11px !important;
+        font-weight: 800 !important;
+        padding: 8px 10px !important;
+        border-radius: 12px !important;
         cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    .custom-select-trigger span {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        flex: 1;
-        text-align: left;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+        width: 100% !important;
+        min-height: 40px;
+        box-sizing: border-box;
     }
 
     .custom-select-trigger span:first-child {
@@ -424,8 +423,9 @@
         display: none; 
         position: absolute;
         top: calc(100% + 6px);
-        left: 0;
-        width: 100% !important; /* Forza la stessa larghezza esatta del box trigger sovrastante */
+        left: 0; /* Allineato a sinistra o centrato a seconda delle preferenze */
+        min-width: 100%; /* Si estende almeno quanto il trigger, ma cresce se il testo è lungo */
+        width: max-content; /* Si adatta perfettamente alla riga più lunga senza troncare */
         max-height: 240px;
         overflow-y: auto;
         background: linear-gradient(145deg, rgba(15, 18, 27, 0.99), rgba(8, 11, 17, 0.99)) !important;
@@ -434,7 +434,6 @@
         padding: 6px !important;
         box-shadow: 0 30px 90px rgba(0, 0, 0, 0.95) !important;
         z-index: 999999 !important;
-        box-sizing: border-box;
     }
 
     .custom-select-wrapper.open .custom-select-options {
@@ -458,16 +457,16 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
+        gap: 16px;
+        white-space: nowrap !important; /* Forza il testo rigorosamente su una sola riga orizzontale */
         width: 100%;
-        box-sizing: border-box;
     }
 
     .custom-option span:first-child {
-        white-space: normal !important; /* Permette al testo lungo di andare a capo in modo leggibile */
-        word-break: break-word;
+        white-space: nowrap !important; /* Impedisce al testo interno di andare a capo */
+        overflow: hidden;
+        text-overflow: ellipsis;
         flex: 1;
-        text-align: left;
     }
 
     .custom-option:hover {
@@ -1542,88 +1541,185 @@
     
     
     async function showMainApp() {
-    if (!currentUser) {
-        showAuthScreen();
-        return;
-    }
-
-    const userId = currentUser.id;
-    document.getElementById('auth-container').classList.add('hidden');
-    document.getElementById('main-app-container').classList.remove('hidden');
-    document.getElementById('logout-btn').classList.remove('hidden');
-
-    // 1. CARICAMENTO SICURO DA LOCALSTORAGE (Backup Offline Immediato)
-    try {
-        const localRoutines = localStorage.getItem('LiftMetrics_routines_' + userId);
-        const localHistory = localStorage.getItem('LiftMetrics_history_' + userId);
-        const localSavedStatus = localStorage.getItem('LiftMetrics_saved_status_' + userId);
-        const localKey = localStorage.getItem('LiftMetrics_current_key_' + userId);
-
-        if (localRoutines) routines = JSON.parse(localRoutines);
-        if (localHistory) historyData = JSON.parse(localHistory);
-        if (localSavedStatus) savedStatusMap = JSON.parse(localSavedStatus);
-        if (localKey && routines[localKey]) currentRoutineKey = localKey;
-    } catch (e) {
-        console.warn("Errore lettura cache locale:", e);
-    }
-
-    // 2. TENTATIVO DI SINCRONIZZAZIONE CLOUD (Se online, aggiorna con Supabase)
-    if (navigator.onLine) {
-        try {
-            const { data, error } = await db
-                .from('LiftMetrics_data')
-                .select('routines, history, saved_status')
-                .eq('id', userId)
-                .maybeSingle();
-
-            if (data && !error) {
-                // Se il cloud ha dati validi, uniamo o diamo priorità a seconda della freschezza, 
-                // oppure aggiorniamo se il locale era vuoto.
-                if (data.routines && Object.keys(data.routines).length > 0) {
-                    routines = data.routines;
-                }
-                if (data.history && data.history.length > 0) {
-                    // Uniamo lo storico senza perdere duplicati se possibile, o usiamo il cloud se più aggiornato
-                    historyData = data.history;
-                }
-                saveRoutinesStorage(); // Aggiorna la cache locale con i dati freschi del cloud
-            }
-        } catch (err) {
-            console.warn("Sincronizzazione cloud saltata (offline o errore di rete):", err);
+        if (!currentUser) {
+            showAuthScreen();
+            return;
         }
+
+        // Memorizza l'utente per il quale stiamo caricando i dati.
+        const loadingUserId = currentUser.id;
+
+        // Mantieni nascosta l'app finché i dati cloud non sono caricati.
+        document.getElementById('auth-container').classList.remove('hidden');
+        document.getElementById('main-app-container').classList.add('hidden');
+        document.getElementById('logout-btn').classList.add('hidden');
+
+        // Inizializzazione temporanea: non usare dati locali condivisi.
+        routines = JSON.parse(JSON.stringify(defaultRoutines));
+        currentRoutineKey = Object.keys(routines)[0];
+        historyData = [];
+        savedStatusMap = {};
+
+        // Carica i dati esclusivamente dall'account autenticato.
+        try {
+            await fetchRemoteData();
+
+            // Impedisci di mostrare dati se nel frattempo è cambiato utente.
+            if (!currentUser || currentUser.id !== loadingUserId) {
+                return;
+            }
+        } catch (error) {
+            console.error("Errore durante il caricamento dell'account:", error);
+
+            document.getElementById('main-app-container').classList.add('hidden');
+            document.getElementById('logout-btn').classList.add('hidden');
+
+            showAuthScreen();
+
+            await customAlert(
+                error.message ||
+                "Impossibile caricare i tuoi dati. Riprova."
+            );
+
+            return;
+        }
+
+        // Mostra l'app soltanto dopo il caricamento riuscito.
+        document.getElementById('auth-container').classList.add('hidden');
+        document.getElementById('main-app-container').classList.remove('hidden');
+        document.getElementById('logout-btn').classList.remove('hidden');
+
+        // La sessione attiva locale non deve passare da un account all'altro.
+        const sessionOwner = localStorage.getItem(
+            'LiftMetrics_active_session_owner'
+        );
+
+        if (sessionOwner !== loadingUserId) {
+            localStorage.removeItem('LiftMetrics_active_session');
+            localStorage.removeItem('LiftMetrics_summary_logs');
+            localStorage.removeItem('LiftMetrics_summary_duration');
+            localStorage.removeItem('LiftMetrics_sub_view');
+
+            currentSessionLogsTemp = [];
+            currentDurationMinutesTemp = 0;
+        }
+
+        localStorage.setItem(
+            'LiftMetrics_active_session_owner',
+            loadingUserId
+        );
+
+        const hasActiveSession = loadActiveWorkoutSession();
+
+        const savedTab = localStorage.getItem('LiftMetrics_current_tab');
+        let targetTab = savedTab !== null ? parseInt(savedTab, 10) : 0;
+
+        // Se il valore salvato non è valido, torna alla prima scheda.
+        if (!Number.isInteger(targetTab) || targetTab < 0 || targetTab >= tabIds.length) {
+            targetTab = 0;
+        }
+
+        const savedSubView = localStorage.getItem('LiftMetrics_sub_view');
+
+        if (savedSubView === 'workout_summary') {
+            const savedLogs = localStorage.getItem('LiftMetrics_summary_logs');
+            const savedDuration = localStorage.getItem('LiftMetrics_summary_duration');
+
+            if (savedLogs) {
+                try {
+                    currentSessionLogsTemp = JSON.parse(savedLogs);
+                } catch (e) {
+                    currentSessionLogsTemp = [];
+                }
+            }
+
+            if (savedDuration) {
+                currentDurationMinutesTemp = parseInt(savedDuration, 10) || 1;
+            }
+        }
+
+        currentTabIndex = targetTab;
+
+        const buttons = document.querySelectorAll('.tab-btn');
+
+        buttons.forEach((button, index) => {
+            if (index === targetTab) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+        });
+
+        tabIds.forEach((id, index) => {
+            const content = document.getElementById(id);
+
+            if (content) {
+                if (index === targetTab) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            }
+        });
+
+        if (hasActiveSession) {
+            document.getElementById('start-session-view').classList.add('hidden');
+            document.getElementById('active-workout-view').classList.remove('hidden');
+            document.getElementById('workout-summary-view').classList.add('hidden');
+
+            renderWorkout();
+            updateTimerDisplay();
+
+            if (workoutState.isRest) {
+                startRestTimer(workoutState.seconds);
+            } else {
+                startWorkTimer(true);
+            }
+
+            return;
+        }
+
+        if (
+            targetTab === 0 &&
+            savedSubView === 'workout_summary' &&
+            currentSessionLogsTemp.length > 0
+        ) {
+            document.getElementById('start-session-view').classList.add('hidden');
+            document.getElementById('active-workout-view').classList.add('hidden');
+            document.getElementById('workout-summary-view').classList.remove('hidden');
+            document.getElementById('main-nav-tabs').style.display = 'none';
+
+            refreshSummaryDisplay();
+            return;
+        }
+
+        if (targetTab === 0) {
+            document.getElementById('start-session-view').classList.remove('hidden');
+            document.getElementById('active-workout-view').classList.add('hidden');
+            document.getElementById('workout-summary-view').classList.add('hidden');
+            document.getElementById('main-nav-tabs').style.display = 'grid';
+        } else if (targetTab === 1) {
+            initRoutineSelectors();
+
+            if (savedSubView === 'routine_edit') {
+                enableEditMode();
+            } else {
+                showSummaryView();
+            }
+        } else {
+            if (targetTab === 3) {
+                renderHistory();
+            }
+
+            if (targetTab === 2) {
+                initChartSelect();
+            }
+        }
+
+        // Aggiorna i selettori solo dopo aver caricato i dati cloud.
+        initActiveRoutineSelect();
+        updateLiftMetricsDashboard();
     }
-
-    // Ripristino stato UI e sessione attiva
-    const hasActiveSession = loadActiveWorkoutSession();
-    const savedTab = localStorage.getItem('LiftMetrics_current_tab');
-    let targetTab = savedTab !== null ? parseInt(savedTab, 10) : 0;
-    if (!Number.isInteger(targetTab) || targetTab < 0 || targetTab >= tabIds.length) targetTab = 0;
-
-    currentTabIndex = targetTab;
-    document.querySelectorAll('.tab-btn').forEach((b, idx) => b.classList.toggle('active', idx === targetTab));
-    tabIds.forEach((id, idx) => document.getElementById(id).classList.toggle('active', idx === targetTab));
-
-    if (hasActiveSession) {
-        document.getElementById('start-session-view').classList.add('hidden');
-        document.getElementById('active-workout-view').classList.remove('hidden');
-        document.getElementById('workout-summary-view').classList.add('hidden');
-        renderWorkout();
-        updateTimerDisplay();
-        if (workoutState.isRest) startRestTimer(workoutState.seconds);
-        else startWorkTimer(true);
-        return;
-    }
-
-    if (targetTab === 0) {
-        document.getElementById('start-session-view').classList.remove('hidden');
-        document.getElementById('active-workout-view').classList.add('hidden');
-        document.getElementById('workout-summary-view').classList.add('hidden');
-        document.getElementById('main-nav-tabs').style.display = 'grid';
-    }
-
-    initActiveRoutineSelect();
-    updateLiftMetricsDashboard();
-}
 
 
     async function handleForgotPassword() {
@@ -2126,19 +2222,33 @@
 
     
     function saveRoutinesStorage() {
-        if (!currentUser) return;
+        if (!currentUser) {
+            console.error("Salvataggio bloccato: nessun utente autenticato.");
+            return;
+        }
+
         const userId = currentUser.id;
 
-        // Salvataggio persistente in locale legato all'utente
-        localStorage.setItem('LiftMetrics_routines_' + userId, JSON.stringify(routines));
-        localStorage.setItem('LiftMetrics_history_' + userId, JSON.stringify(historyData));
-        localStorage.setItem('LiftMetrics_saved_status_' + userId, JSON.stringify(savedStatusMap));
-        localStorage.setItem('LiftMetrics_current_key_' + userId, currentRoutineKey);
+        // Cache separata per il proprietario dei dati.
+        localStorage.setItem(
+            'LiftMetrics_routines_' + userId,
+            JSON.stringify(routines)
+        );
+        localStorage.setItem(
+            'LiftMetrics_history_' + userId,
+            JSON.stringify(historyData)
+        );
+        localStorage.setItem(
+            'LiftMetrics_saved_status_' + userId,
+            JSON.stringify(savedStatusMap)
+        );
+        localStorage.setItem(
+            'LiftMetrics_current_key_' + userId,
+            currentRoutineKey
+        );
 
-        // Tentativo di sync in background se c'è connessione
-        if (navigator.onLine) {
-            void syncDataToSupabase();
-        }
+        // Mantieni il salvataggio cloud.
+        void syncDataToSupabase();
     }
 
 
