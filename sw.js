@@ -1,23 +1,25 @@
-const CACHE_NAME = 'LiftMetrics-cache-v2.5.7'; // Incrementa questa versione ad ogni modifica importante
+const CACHE_NAME = 'liftmetrics-v1';
 const ASSETS_TO_CACHE = [
-  './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+  'https://cdn.jsdelivr.net/npm/chart.js',
+  'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'
 ];
 
-// Installazione del Service Worker
-self.addEventListener('install', (e) => {
-  self.skipWaiting();
-  e.waitUntil(
+// Installazione del Service Worker e salvataggio in cache delle risorse statiche e CDN
+self.addEventListener('install', (event) => {
+  event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
+  self.skipWaiting();
 });
 
 // Attivazione e pulizia delle vecchie cache
-self.addEventListener('activate', (e) => {
-  e.waitUntil(
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
@@ -26,34 +28,42 @@ self.addEventListener('activate', (e) => {
           }
         })
       );
-    }).then(() => self.clients.claim())
+    })
   );
+  self.clients.claim();
 });
 
-// Strategia Network First con fallback su Cache
-self.addEventListener('fetch', (e) => {
-  // Escludi le chiamate a Supabase o esterne dalla cache del service worker
-  if (e.request.url.includes('supabase.co')) return;
+// Intercettazione delle richieste di rete (Strategia: Cache First, con fallback alla rete)
+self.addEventListener('fetch', (event) => {
+  // Gestisce solo le richieste GET
+  if (event.request.method !== 'GET') return;
 
-  e.respondWith(
-    fetch(e.request)
-      .then((networkResponse) => {
-        // Se la rete risponde, aggiorna la cache in background per la prossima volta
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        // Restituisce la risorsa in cache e aggiorna in background se online
+        fetch(event.request).then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, networkResponse);
+            });
+          }
+        }).catch(() => {/* Ignora errori di rete se offline */});
+        return cachedResponse;
+      }
+
+      // Se non è in cache, prova a recuperarlo dalla rete
+      return fetch(event.request).then((networkResponse) => {
         return caches.open(CACHE_NAME).then((cache) => {
-          cache.put(e.request, networkResponse.clone());
+          cache.put(event.request, networkResponse.clone());
           return networkResponse;
         });
-      })
-      .catch(() => {
-        // Se siamo offline o la rete fallisce, restituisci il file dalla cache
-        return caches.match(e.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          if (e.request.mode === 'navigate') {
-            return caches.match('./index.html');
-          }
-        });
-      })
+      }).catch(() => {
+        // Fallback di sicurezza per pagine o richieste di navigazione
+        if (event.request.mode === 'navigate') {
+          return caches.match('./index.html');
+        }
+      });
+    })
   );
 });
